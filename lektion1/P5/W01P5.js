@@ -10,23 +10,14 @@ window.onload = function init(){
 
     // Define object data
 
-    var n = 100;
+    var n = 50;
     var r = 0.5;
 
     var positions = [vec2(0.0, 0.0)];
     var colors = [vec4(0.0, 1.0, 0.0, 1.0)];
     
-    for (let index = 0; index < n; index++) {
-        const theta = 2 * Math.PI * index / n;
-
-        const x = r * Math.cos(theta);
-        const y = r * Math.sin(theta);
-        positions.push(vec2(x, y))
-        colors.push(vec4(0.0, 0.7, 0.0, 1.0));   
-    }
-
-    for (let index = 0; index < 1; index++) {
-        const theta = 2 * Math.PI * index / n;
+    for (let index = 0; index < n + 1; index++) {
+        const theta = 2 * Math.PI * (index % n) / n;
 
         const x = r * Math.cos(theta);
         const y = r * Math.sin(theta);
