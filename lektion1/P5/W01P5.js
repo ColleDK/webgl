@@ -49,8 +49,31 @@ window.onload = function init(){
     checkForErrors(gl);
     gl.enableVertexAttribArray(vColor);
 
+
+    // Get translation vector location
+    var uTranslate = gl.getUniformLocation(program, "uTranslate");
+    var translate = vec4(0.0, 0.0, 0.0, 0.0);
+    var w = 0.01;
+
     // Draw object
-    gl.drawArrays(gl.TRIANGLE_FAN, 0, positions.length);
+    //gl.drawArrays(gl.TRIANGLE_FAN, 0, positions.length);
+    function tick() { 
+        var length = Math.sqrt( translate[0] * translate[0] + translate[1] * translate[1] )
+        console.log("Current length " + length);
+        w = Math.sign(1 - r - length) * w
+        console.log("Current w " + w);
+
+        translate = vec4(translate[0], translate[1] + w, translate[2], translate[3]);
+
+        gl.uniform4fv(uTranslate, flatten(translate));
+        render(gl, positions.length); requestAnimationFrame(tick) 
+    }
+    tick();
+}
+
+function render(gl, numpoints) {
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.drawArrays(gl.TRIANGLE_FAN, 0, numpoints);
 }
 
 const checkForErrors = (gl) => {
