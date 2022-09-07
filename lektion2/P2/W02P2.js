@@ -22,6 +22,11 @@ window.onload = function init(){
     var maxVertices = 1000;
     var index = 0; var numPoints = 0;
 
+
+    // Create data buffers
+    var vBuffer = gl.createBuffer();
+    var cBuffer = gl.createBuffer();
+
     // Click listener
     canvas.addEventListener("click", (event) => {
         var currentColor = colors[colorSelector.selectedIndex];
@@ -35,15 +40,15 @@ window.onload = function init(){
         )
 
         // Add the position to the buffer data
+        gl.bindBuffer(gl.ARRAY_BUFFER, vBuffer);
         gl.bufferSubData(gl.ARRAY_BUFFER, index * sizeof['vec2'], flatten(mousepos));
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, cBuffer);
         gl.bufferSubData(gl.ARRAY_BUFFER, index * sizeof['vec4'], flatten(currentColor));
 
         numPoints = Math.max(numPoints, ++index); index %= maxVertices;
     })
-    
-    // Create data buffers
-    var vBuffer = gl.createBuffer();
-    var cBuffer = gl.createBuffer();
+
 
     // Bind position buffer
     gl.bindBuffer(gl.ARRAY_BUFFER, vBuffer);
