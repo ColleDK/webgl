@@ -22,7 +22,7 @@ window.onload = function init(){
         const x = r * Math.cos(theta);
         const y = r * Math.sin(theta);
         positions.push(vec2(x, y))
-        colors.push(vec4(0.0, 0.7, 0.0, 1.0));
+        colors.push(vec4(0.0, 0.5, 0.0, 1.0));
     }
 
     // Create data buffers
@@ -36,8 +36,8 @@ window.onload = function init(){
     // Get position attribute location
     var vPosition = gl.getAttribLocation(program, "aPosition");
     gl.vertexAttribPointer(vPosition, 2, gl.FLOAT, false, 0, 0);
+    checkForErrors(gl);
     gl.enableVertexAttribArray(vPosition);
-
 
     // Bind color buffer
     gl.bindBuffer(gl.ARRAY_BUFFER, cBuffer);
@@ -46,8 +46,20 @@ window.onload = function init(){
     // Get color attribute position
     var vColor = gl.getAttribLocation(program, "aColor");
     gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 0, 0);
+    checkForErrors(gl);
     gl.enableVertexAttribArray(vColor);
 
     // Draw object
     gl.drawArrays(gl.TRIANGLE_FAN, 0, positions.length);
+}
+
+const checkForErrors = (gl) => {
+    switch(gl.getError()){
+        case gl.NO_ERROR: 
+            console.log("No error occured");
+            break;
+        default: 
+            console.log("Error occured");
+            break;
+    }
 }

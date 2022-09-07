@@ -10,7 +10,7 @@ window.onload = function init(){
 
     // Define object data
     var vertices = [ vec2(-0.5, -0.5), vec2(0.5, -0.5), vec2(0.5, 0.5), vec2(-0.5, -0.5), vec2(-0.5, 0.5), vec2(0.5, 0.5) ];
-    var colors = [vec4(1.0, 1.0, 1.0, 1.0), vec4(1.0, 1.0, 1.0, 1.0), vec4(1.0, 1.0, 1.0, 1.0), vec4(1.0, 1.0, 1.0, 1.0), vec4(1.0, 1.0, 1.0, 1.0), vec4(1.0, 1.0, 1.0, 1.0)]
+    var colors = [vec4(1.0, 0.0, 0.0, 1.0), vec4(0.0, 1.0, 0.0, 1.0), vec4(0.0, 0.0, 1.0, 1.0), vec4(1.0, 0.0, 0.0, 1.0), vec4(0.0, 1.0, 0.0, 1.0), vec4(0.0, 0.0, 1.0, 1.0)]
     
     // Create data buffers
     var vBuffer = gl.createBuffer();
@@ -35,6 +35,22 @@ window.onload = function init(){
     gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(vColor);
 
+
+    // Get beta location
+    var uBeta = gl.getUniformLocation(program, "uBeta");
+    var beta = 0.0;
+
     // Draw object
-    gl.drawArrays(gl.TRIANGLES, 0, 6);
+    //gl.drawArrays(gl.TRIANGLES, 0, 6);
+    function tick() { 
+        beta += 0.01;
+        gl.uniform1f(uBeta, beta);
+        render(gl, vertices.length); requestAnimationFrame(tick) 
+    }
+    tick();
+}
+
+function render(gl, numpoints) {
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.drawArrays(gl.TRIANGLES, 0, numpoints);
 }
