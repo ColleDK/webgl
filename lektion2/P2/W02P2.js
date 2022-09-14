@@ -1,6 +1,8 @@
 window.onload = function init(){
     var canvas = document.getElementById("c");
     var colorSelector = document.getElementById("colorMenu");
+    var clearSelector = document.getElementById("clearMenu");
+    var clearButton = document.getElementById("clear_btn");
 
     var gl = canvas.getContext("webgl");
 
@@ -47,6 +49,11 @@ window.onload = function init(){
         gl.bufferSubData(gl.ARRAY_BUFFER, index * sizeof['vec4'], flatten(currentColor));
 
         numPoints = Math.max(numPoints, ++index); index %= maxVertices;
+    })
+
+    clearButton.addEventListener("click", (event) => {
+        var currentColor = colors[clearSelector.selectedIndex];
+        gl.clearColor(currentColor[0], currentColor[1], currentColor[2], currentColor[3]);
     })
 
 
