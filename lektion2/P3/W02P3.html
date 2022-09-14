@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+    <body>
+    <h1>Computer graphics lektion 2</h1>
+    <canvas id="c" height="512" width="512"></canvas>
+    <script type="text/javascript" src="W02P3.js"></script>
+    <script type="text/javascript" src="../../common/webgl-utils.js"></script>
+    <script type="text/javascript" src="../../common/initShaders.js"></script>
+    <script id="vertex-shader" type="x-shader/x-vertex">
+        attribute vec4 aPosition;
+        attribute vec4 aColor;
+        varying vec4 vColor;
+        void main(){
+            vColor = aColor;
+            gl_Position = aPosition;
+            gl_PointSize = 10.0;
+        }
+    </script>
+    <script id="fragment-shader" type="x-shader/x-fragment">
+        precision mediump float;
+        varying vec4 vColor;
+        void main(){
+            gl_FragColor = vColor;
+        }
+    </script>
+    <script type="text/javascript" src="../../common/MV.js"></script>
+    <br>
+    <select id="colorMenu" size="1">
+        <option value="0" selected>Black</option>
+        <option value="1">Red</option>
+        <option value="2">Green</option>
+        <option value="3">Blue</option>
+        <option value="4">White</option>
+    </select>
+
+    <br>
+    <br>
+    <select id="clearMenu" size="1">
+        <option value="0" selected>Black</option>
+        <option value="1">Red</option>
+        <option value="2">Green</option>
+        <option value="3">Blue</option>
+        <option value="4">White</option>
+    </select>
+    <button id="clear_btn">Clear color</button>
+    <br>
+    <h4>Draw mode
+        <select id="drawModeMenu" size="1">
+            <option value="0" selected>Point</option>
+            <option value="0">Triangle</option>
+        </select>
+    </h4>
+    </body>
+</html>
