@@ -62,15 +62,7 @@ window.onload = function init(){
     gl.vertexAttribPointer(vPosition, 3, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(vPosition);
 
-    var rotation = rotateX(45);
-    var scale = scalem(0.5, 0.5, 0.5);
-    var model = mult(scale, rotation);
-
-    console.log("Model " + model);
-    var uModel = gl.getUniformLocation(program, "u_model");
-    gl.uniformMatrix4fv(uModel, false, flatten(scale));
-
-    var eye = [1,1,-2];
+    var eye = [0,5,-5];
     var at = [0,0,0];
     var up = [0,1,0]
     var view = lookAt(eye, at, up);
@@ -88,5 +80,15 @@ window.onload = function init(){
     gl.uniformMatrix4fv(uProjection, false, flatten(projection));
 
     // Draw object
-    gl.drawElements(gl.LINES, faces.length, gl.UNSIGNED_SHORT, 0);
+    for(var i = 0; i < 3; i++){
+        var scale = scalem(0.5, 0.5, 0.5);
+        var move = translate(-1 + i + 0.33 * i, 0, 0);
+        var model2 = mult(move, scale);
+
+        console.log("Model " + model2);
+        var uModel = gl.getUniformLocation(program, "u_model");
+        gl.uniformMatrix4fv(uModel, false, flatten(model2));
+
+        gl.drawElements(gl.LINES, faces.length, gl.UNSIGNED_SHORT, 0);
+    }
 }
