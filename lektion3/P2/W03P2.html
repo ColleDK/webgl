@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+    <body>
+    <h1>Computer graphics lektion 3</h1>
+    <canvas id="c" height="512" width="512"></canvas>
+    <script type="text/javascript" src="W03P2.js"></script>
+    <script type="text/javascript" src="../../common/webgl-utils.js"></script>
+    <script type="text/javascript" src="../../common/initShaders.js"></script>
+    <script id="vertex-shader" type="x-shader/x-vertex">
+        uniform mat4 u_model;
+        uniform mat4 u_view;
+        uniform mat4 u_projection;
+        attribute vec3 aPosition;
+        void main(){
+            gl_Position = u_projection * u_view * u_model * vec4(aPosition, 1.0);
+            gl_PointSize = 20.0;
+        }
+    </script>
+    <script id="fragment-shader" type="x-shader/x-fragment">
+        precision mediump float;
+        void main(){
+            gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+        }
+    </script>
+    <script type="text/javascript" src="../../common/MV.js"></script>
+    </body>
+</html>
