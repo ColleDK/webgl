@@ -62,7 +62,9 @@ window.onload = function init(){
     gl.vertexAttribPointer(vPosition, 3, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(vPosition);
 
-    var eye = [0,5,-5];
+
+    var numObjects = 3;
+    var eye = [0 , numObjects,-7];
     var at = [0,0,0];
     var up = [0,1,0]
     var view = lookAt(eye, at, up);
@@ -71,8 +73,8 @@ window.onload = function init(){
     var uView = gl.getUniformLocation(program, "u_view");
     gl.uniformMatrix4fv(uView, false, flatten(view));
 
-    var fov = 90;
-    var apsectRatio = gl.canvas.clientWidth / gl.canvas.clientWidth;
+    var fov = 45;
+    var apsectRatio = gl.canvas.clientWidth / gl.canvas.clientHeight;
     var projection = perspective(fov, apsectRatio, -1, 1);
 
     console.log("Projection " + projection);
@@ -80,7 +82,7 @@ window.onload = function init(){
     gl.uniformMatrix4fv(uProjection, false, flatten(projection));
 
     // Draw object
-    for(var i = 0; i < 3; i++){
+    for(var i = 0; i < numObjects; i++){
         var scale = scalem(0.5, 0.5, 0.5);
         var move = translate(-1 + i + 0.33 * i, 0, 0);
         var model2 = mult(move, scale);
@@ -89,6 +91,6 @@ window.onload = function init(){
         var uModel = gl.getUniformLocation(program, "u_model");
         gl.uniformMatrix4fv(uModel, false, flatten(model2));
 
-        gl.drawElements(gl.LINES, faces.length, gl.UNSIGNED_SHORT, 0);
+        gl.drawElements(gl.TRIANGLES, faces.length, gl.UNSIGNED_SHORT, 0);
     }
 }
