@@ -3,7 +3,7 @@
     <body>
     <h1>Computer graphics lektion 5</h1>
     <canvas id="c" height="700" width="700"></canvas>
-    <script type="text/javascript" src="W04P3.js"></script>
+    <script type="text/javascript" src="W04P4.js"></script>
     <script type="text/javascript" src="../../common/webgl-utils.js"></script>
     <script type="text/javascript" src="../../common/initShaders.js"></script>
     <script id="vertex-shader" type="x-shader/x-vertex">
@@ -36,6 +36,40 @@
         }
     </script>
     <script type="text/javascript" src="../../common/MV.js"></script>
+    <div class="slidecontainer">
+        <label for="radiance">Emitted radiance (L_e)</label>
+        <input type="range" id="radiance" name="radiance"
+         min="0.0" max="2.0" step="0.01" oninput="this.nextElementSibling.value = this.value">
+         <output>1.0</output>
+
+         <br>
+
+        <label for="ambient">Ambient coefficient (k_a)</label>
+        <input type="range" id="ambient" name="ambient"
+         min="0.0" max="1.0" step="0.01" oninput="this.nextElementSibling.value = this.value">
+         <output>0.5</output>
+
+        <br>
+
+        <label for="diffuse">Diffuse coefficient (k_d)</label>
+        <input type="range" id="diffuse" name="diffuse"
+         min="0.0" max="1.0" step="0.01" oninput="this.nextElementSibling.value = this.value">
+         <output>0.5</output>
+
+         <br>
+
+        <label for="specular">Specular coefficient (k_s)</label>
+        <input type="range" id="specular" name="specular"
+         min="0.0" max="1.0" step="0.01" oninput="this.nextElementSibling.value = this.value">
+         <output>0.5</output>
+
+         <br>
+
+        <label for="shininess">Shininess (s)</label>
+        <input type="range" id="shininess" name="shininess"
+         min="0.0" max="10000" step="100" oninput="this.nextElementSibling.value = this.value">
+         <output>5000</output>
+    </div>
     <br>
     <button id="subdivide_btn">Subdivide</button>
     <button id="coarsen_btn">Coarsen</button>
