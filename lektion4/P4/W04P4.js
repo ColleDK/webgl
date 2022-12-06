@@ -4,6 +4,12 @@ var radius = 3;
 var currentSubDivides = 0;
 var shouldOrbit = true;
 
+var diffuse = 1.0;
+var emission = 0.5;
+var ambient = 0.5;
+var specular = 0.5;
+var shininess = 5000;
+
 window.onload = function init(){
     var canvas = document.getElementById("c");
     var gl = canvas.getContext("webgl");
@@ -11,13 +17,17 @@ window.onload = function init(){
     var subdivideButton = document.getElementById("subdivide_btn");
     var coarsenButton = document.getElementById("coarsen_btn");
     var orbitButton = document.getElementById("orbit_btn");
+    var diffuseSlider = document.getElementById("diffuse");
+    var emissionSlider = document.getElementById("radiance");
+    var ambientSlider = document.getElementById("ambient");
+    var specularSlider = document.getElementById("specular");
+    var shininessSlider = document.getElementById("shininess");
 
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
     gl.clearColor(0.3921, 0.5843, 0.9294, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    //gl.enable(gl.CULL_FACE);
     gl.enable(gl.DEPTH_TEST);
 
     gl.program = initShaders(gl, "vertex-shader", "fragment-shader");
@@ -38,17 +48,13 @@ window.onload = function init(){
 
     var fov = 45;
     var apsectRatio = gl.canvas.clientWidth / gl.canvas.clientHeight;
-    var projection = perspective(fov, apsectRatio, -1, 1);
+    var projection = perspective(fov, apsectRatio, 1, 10);
 
-    console.log("Projection " + projection);
     var uProjection = gl.getUniformLocation(gl.program, "u_projection");
     gl.uniformMatrix4fv(uProjection, false, flatten(projection));
 
     var uLightPosition = gl.getUniformLocation(gl.program, "u_lightPosition");
     gl.uniform4fv(uLightPosition, flatten(vec4(0, 0, -1, 0)));
-
-    var uLightEmission = gl.getUniformLocation(gl.program, "u_lightEmission");
-    gl.uniform3fv(uLightEmission, flatten(vec3(1, 1, 1)));
 
     subdivideButton.addEventListener("click", (event) => {
         currentSubDivides = Math.min(currentSubDivides+1, 8)
@@ -64,6 +70,26 @@ window.onload = function init(){
         shouldOrbit = !shouldOrbit;
     })
 
+    diffuseSlider.addEventListener("input", (event) => {
+        diffuse = event.target.value;
+    })
+
+    emissionSlider.addEventListener("input", (event) => {
+        emission = event.target.value;
+    })
+
+    ambientSlider.addEventListener("input", (event) => {
+        ambient = event.target.value;
+    })
+
+    specularSlider.addEventListener("input", (event) => {
+        specular = event.target.value;
+    })
+    
+    shininessSlider.addEventListener("input", (event) => {
+        shininess = event.target.value;
+    })
+
     function tick(){ if(shouldOrbit){angle+=0.01}; render(gl, points.length, numObjects); requestAnimationFrame(tick); }
     tick();
 }
@@ -75,9 +101,23 @@ function render(gl, numPoints, numObjects){
     var up = [0,1,0]
     var view = lookAt(eye, at, up);
 
-    console.log("View " + view);
     var uView = gl.getUniformLocation(gl.program, "u_view");
     gl.uniformMatrix4fv(uView, false, flatten(view));
+
+    var uDiffusePosition = gl.getUniformLocation(gl.program, "u_diffuse");
+    gl.uniform3fv(uDiffusePosition, flatten(vec3(diffuse, diffuse, diffuse)));
+
+    var uEmissionPosition = gl.getUniformLocation(gl.program, "u_emission");
+    gl.uniform3fv(uEmissionPosition, flatten(vec3(emission, emission, emission)));
+
+    var uAmbientPosition = gl.getUniformLocation(gl.program, "u_ambient");
+    gl.uniform3fv(uAmbientPosition, flatten(vec3(ambient, ambient, ambient)));
+
+    var uSpecularPosition = gl.getUniformLocation(gl.program, "u_specular");
+    gl.uniform3fv(uSpecularPosition, flatten(vec3(specular, specular, specular)));
+
+    var uShininessPosition = gl.getUniformLocation(gl.program, "u_shininess");
+    gl.uniform1f(uShininessPosition, shininess);
 
     // Draw object
     for(var i = 0; i < numObjects; i++){
@@ -86,12 +126,11 @@ function render(gl, numPoints, numObjects){
         var move = translate(0, 0, 0);
         var model2 = mult(move, rotation);
 
-        console.log("Model " + model2);
         var uModel = gl.getUniformLocation(gl.program, "u_model");
         gl.uniformMatrix4fv(uModel, false, flatten(model2));
 
         // Get position attribute location
-        var vPosition = gl.getAttribLocation(gl.program, "aPosition");
+        var vPosition = gl.getAttribLocation(gl.program, "a_Position");
         gl.vertexAttribPointer(vPosition, 3, gl.FLOAT, false, 0, 0);
         gl.enableVertexAttribArray(vPosition);
 
@@ -111,8 +150,6 @@ function initSphere(gl, polygon, numOfSubdivs){
     gl.vBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, gl.vBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, flatten(points), gl.STATIC_DRAW);
-    
-
 }
 
 function divideTriangle(a, b, c, numOfTimes){

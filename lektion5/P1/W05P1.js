@@ -1,6 +1,21 @@
+var diffuse = 1.0;
+var emission = 0.5;
+var ambient = 0.5;
+var specular = 0.5;
+var shininess = 5000;
+
+var radius = 1;
+var angle = 0;
+
 window.onload = function init(){
     var canvas = document.getElementById("c");
     var gl = canvas.getContext("webgl");
+
+    var diffuseSlider = document.getElementById("diffuse");
+    var emissionSlider = document.getElementById("radiance");
+    var ambientSlider = document.getElementById("ambient");
+    var specularSlider = document.getElementById("specular");
+    var shininessSlider = document.getElementById("shininess");
 
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
@@ -28,7 +43,7 @@ window.onload = function init(){
 
     var eye = [1, 1, 1];
     var at = [0,0,0];
-    var up = [0,1,0]
+    var up = [0,1,0];
     var view = lookAt(eye, at, up);
 
     console.log("View " + view);
@@ -43,7 +58,30 @@ window.onload = function init(){
     var uProjection = gl.getUniformLocation(gl.program, "u_projection");
     gl.uniformMatrix4fv(uProjection, false, flatten(projection));
 
-    function tick(){; render(gl, view, model); requestAnimationFrame(tick); }
+    var uLightPosition = gl.getUniformLocation(gl.program, "u_lightPosition");
+    gl.uniform4fv(uLightPosition, flatten(vec4(0, 0, -1, 0)));
+
+    diffuseSlider.addEventListener("input", (event) => {
+        diffuse = event.target.value;
+    })
+
+    emissionSlider.addEventListener("input", (event) => {
+        emission = event.target.value;
+    })
+
+    ambientSlider.addEventListener("input", (event) => {
+        ambient = event.target.value;
+    })
+
+    specularSlider.addEventListener("input", (event) => {
+        specular = event.target.value;
+    })
+    
+    shininessSlider.addEventListener("input", (event) => {
+        shininess = event.target.value;
+    })
+
+    function tick(){angle+=0.01; render(gl, view, model); requestAnimationFrame(tick); }
     tick();
 }
 
@@ -101,6 +139,29 @@ function render(gl, view, model){
     if(!g_drawingInfo) return;
 
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    var eye = [radius * Math.sin(angle), 1, radius * Math.cos(angle)];
+    var at = [0,0,0];
+    var up = [0,1,0];
+    var view = lookAt(eye, at, up);
+
+    var uView = gl.getUniformLocation(gl.program, "u_view");
+    gl.uniformMatrix4fv(uView, false, flatten(view));
+
+    var uDiffusePosition = gl.getUniformLocation(gl.program, "u_diffuse");
+    gl.uniform3fv(uDiffusePosition, flatten(vec3(diffuse, diffuse, diffuse)));
+
+    var uEmissionPosition = gl.getUniformLocation(gl.program, "u_emission");
+    gl.uniform3fv(uEmissionPosition, flatten(vec3(emission, emission, emission)));
+
+    var uAmbientPosition = gl.getUniformLocation(gl.program, "u_ambient");
+    gl.uniform3fv(uAmbientPosition, flatten(vec3(ambient, ambient, ambient)));
+
+    var uSpecularPosition = gl.getUniformLocation(gl.program, "u_specular");
+    gl.uniform3fv(uSpecularPosition, flatten(vec3(specular, specular, specular)));
+
+    var uShininessPosition = gl.getUniformLocation(gl.program, "u_shininess");
+    gl.uniform1f(uShininessPosition, shininess);
 
     gl.drawElements(gl.TRIANGLES, g_drawingInfo.indices.length, gl.UNSIGNED_INT, 0);
 }
