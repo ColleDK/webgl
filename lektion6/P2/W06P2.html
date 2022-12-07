@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+    <body>
+    <h1>Computer graphics lektion 7</h1>
+    <canvas id="c" height="700" width="700"></canvas>
+    <script type="text/javascript" src="W06P2.js"></script>
+    <script type="text/javascript" src="../../common/webgl-utils.js"></script>
+    <script type="text/javascript" src="../../common/initShaders.js"></script>
+    <script id="vertex-shader" type="x-shader/x-vertex">
+        uniform mat4 u_projection;
+        uniform mat4 u_view;
+        attribute vec3 a_Position;
+        attribute vec2 a_texcoord;
+        varying vec2 fTexCoord;
+        void main(){
+            gl_Position = u_projection * u_view * vec4(a_Position, 1.0);
+            fTexCoord = a_texcoord;
+        }
+    </script>
+    <script id="fragment-shader" type="x-shader/x-fragment">
+        precision mediump float;
+        uniform sampler2D texMap;
+        varying vec2 fTexCoord;
+        void main() {
+            gl_FragColor = texture2D(texMap, fTexCoord);
+        }
+    </script>
+    <script type="text/javascript" src="../../common/MV.js"></script>
+    <br>
+    <div>
+        <label for="textureWrapping">Texture wrapping:</label>
+        <select id="textureWrapping" size="1">
+            <option value="0" selected>gl.CLAMP_TO_EDGE</option>
+            <option value="1">gl.REPEAT</option>
+        </select>
+
+        <br>
+        <label for="textureMagnification">Texture magniciation:</label>
+        <select id="textureMagnification" size="1">
+            <option value="0" selected>gl.NEAREST</option>
+            <option value="1">gl.LINEAR</option>
+        </select>
+        <br>
+        <label for="textureMinification">Texture miniciation:</label>
+        <select id="textureMinification" size="1">
+            <option value="0" selected>gl.NEAREST</option>
+            <option value="1">gl.LINEAR</option>
+            <option value="2">gl.NEAREST_MIPMAP_NEAREST</option>
+            <option value="3">gl.LINEAR_MIPMAP_NEAREST</option>
+            <option value="4">gl.NEAREST_MIPMAP_LINEAR</option>
+            <option value="5">gl.LINEAR_MIPMAP_LINEAR</option>
+        </select>
+    </div>
+    </body>
+</html>

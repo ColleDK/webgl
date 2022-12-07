@@ -58,9 +58,6 @@ window.onload = function init(){
     gl.vertexAttribPointer(vPosition, 3, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(vPosition);
 
-    var eye = [0, 1, 1];
-    var at = [0,0,-10];
-    var up = [0,1,0];
     var view = mat4()
 
     var fov = 90;
@@ -79,8 +76,8 @@ window.onload = function init(){
     gl.drawElements(gl.TRIANGLES, faces.length, gl.UNSIGNED_SHORT, 0);
 }
 
+// Texture part
 function bindTexture(gl, coords){
-        // Texture part
         var texcoordLocation = gl.getAttribLocation(gl.program, "a_texcoord");
         var texturebuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, texturebuffer);

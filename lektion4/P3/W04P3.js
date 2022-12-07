@@ -38,7 +38,7 @@ window.onload = function init(){
 
     var fov = 45;
     var apsectRatio = gl.canvas.clientWidth / gl.canvas.clientHeight;
-    var projection = perspective(fov, apsectRatio, -1, 1);
+    var projection = perspective(fov, apsectRatio, 1, 10);
 
     console.log("Projection " + projection);
     var uProjection = gl.getUniformLocation(gl.program, "u_projection");
