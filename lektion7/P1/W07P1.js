@@ -64,57 +64,44 @@ window.onload = function init(){
         shouldOrbit = !shouldOrbit;
     })
 
-    loadTexture(gl);
+    initTexture(gl);
 
     function tick(){ if(shouldOrbit){angle+=0.01}; render(gl, points.length, numObjects); requestAnimationFrame(tick); }
     tick();
 }
 
-function loadTexture(gl) {
-    const texture = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-  
-    const level = 0;
-    const internalFormat = gl.RGBA;
-    const width = 1;
-    const height = 1;
-    const border = 0;
-    const srcFormat = gl.RGBA;
-    const srcType = gl.UNSIGNED_BYTE;
-    const pixel = new Uint8Array([0, 0, 255, 255]); // opaque blue
-    gl.texImage2D(
-      gl.TEXTURE_2D,
-      level,
-      internalFormat,
-      width,
-      height,
-      border,
-      srcFormat,
-      srcType,
-      pixel
-    );
-  
-    const image = new Image();
-    image.onload = () => {
-      gl.bindTexture(gl.TEXTURE_2D, texture);
-      gl.texImage2D(
-        gl.TEXTURE_2D,
-        level,
-        internalFormat,
-        srcFormat,
-        srcType,
-        image
-      );
+var g_tex_ready = 0;
+function initTexture(gl)
+{
+    var cubemap = ['textures/cm_left.png', // POSITIVE_X
+        'textures/cm_right.png', // NEGATIVE_X
+        'textures/cm_top.png', // POSITIVE_Y
+        'textures/cm_bottom.png', // NEGATIVE_Y
+        'textures/cm_back.png', // POSITIVE_Z
+        'textures/cm_front.png' // NEGATIVE_Z
+    ]; 
 
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    };
-    image.src = 'earth.jpg';
-  
-    return texture;
-  }
+    gl.activeTexture(gl.TEXTURE0);
+    var texture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_CUBE_MAP, texture);
+    gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    for(var i = 0; i < 6; ++i) {
+        var image = document.createElement('img');
+        image.crossorigin = 'anonymous';
+        image.textarget = gl.TEXTURE_CUBE_MAP_POSITIVE_X + i;
+        image.onload = function(event)
+        {
+            var image = event.target;
+            gl.activeTexture(gl.TEXTURE0);
+            gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+            gl.texImage2D(image.textarget, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
+            ++g_tex_ready;
+        };
+        image.src = cubemap[i];
+    }
+    gl.uniform1i(gl.getUniformLocation(gl.program, "texMap"), 0);
+}
 
 function render(gl, numPoints, numObjects){
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);

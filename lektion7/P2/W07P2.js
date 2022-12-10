@@ -2,17 +2,12 @@ var points = []
 var normals = []
 var angle = 0;
 var radius = 3;
-var currentSubDivides = 0;
 var shouldOrbit = true;
 var texSize = 64;
 
 window.onload = function init(){
     var canvas = document.getElementById("c");
     var gl = canvas.getContext("webgl");
-
-    var subdivideButton = document.getElementById("subdivide_btn");
-    var coarsenButton = document.getElementById("coarsen_btn");
-    var orbitButton = document.getElementById("orbit_btn");
 
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
@@ -33,7 +28,7 @@ window.onload = function init(){
     ];
 
     gl.vBuffer = null;
-    initSphere(gl, vertices, currentSubDivides);
+    initSphere(gl, vertices, 8);
 
     var numObjects = 1;
 
@@ -42,7 +37,7 @@ window.onload = function init(){
     var projection = perspective(fov, apsectRatio, 1, 10);
 
     var uProjection = gl.getUniformLocation(gl.program, "u_projection");
-    gl.uniformMatrix4fv(uProjection, false, flatten(projection));
+    gl.uniformMatrix4fv(uProjection, false, flatten(mat4()));
 
     var uLightPosition = gl.getUniformLocation(gl.program, "u_lightPosition");
     gl.uniform4fv(uLightPosition, flatten(vec4(0, 0, -1, 0)));
@@ -50,88 +45,75 @@ window.onload = function init(){
     var uLightEmission = gl.getUniformLocation(gl.program, "u_lightEmission");
     gl.uniform3fv(uLightEmission, flatten(vec3(1, 1, 1)));
 
-    subdivideButton.addEventListener("click", (event) => {
-        currentSubDivides = Math.min(currentSubDivides+1, 8)
-        initSphere(gl, vertices, currentSubDivides);
-    })
-
-    coarsenButton.addEventListener("click", (event) => {
-        currentSubDivides = Math.max(currentSubDivides-1, 0)
-        initSphere(gl, vertices, currentSubDivides);
-    })
-
-    orbitButton.addEventListener("click", (event) => {
-        shouldOrbit = !shouldOrbit;
-    })
-
-    loadTexture(gl);
+    initTexture(gl);
 
     function tick(){ if(shouldOrbit){angle+=0.01}; render(gl, points.length, numObjects); requestAnimationFrame(tick); }
     tick();
 }
 
-function loadTexture(gl) {
-    const texture = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-  
-    const level = 0;
-    const internalFormat = gl.RGBA;
-    const width = 1;
-    const height = 1;
-    const border = 0;
-    const srcFormat = gl.RGBA;
-    const srcType = gl.UNSIGNED_BYTE;
-    const pixel = new Uint8Array([0, 0, 255, 255]); // opaque blue
-    gl.texImage2D(
-      gl.TEXTURE_2D,
-      level,
-      internalFormat,
-      width,
-      height,
-      border,
-      srcFormat,
-      srcType,
-      pixel
-    );
-  
-    const image = new Image();
-    image.onload = () => {
-      gl.bindTexture(gl.TEXTURE_2D, texture);
-      gl.texImage2D(
-        gl.TEXTURE_2D,
-        level,
-        internalFormat,
-        srcFormat,
-        srcType,
-        image
-      );
+var g_tex_ready = 0;
+function initTexture(gl)
+{
+    var cubemap = ['textures/cm_left.png', // POSITIVE_X
+        'textures/cm_right.png', // NEGATIVE_X
+        'textures/cm_top.png', // POSITIVE_Y
+        'textures/cm_bottom.png', // NEGATIVE_Y
+        'textures/cm_back.png', // POSITIVE_Z
+        'textures/cm_front.png' // NEGATIVE_Z
+    ]; 
 
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    };
-    image.src = 'earth.jpg';
-  
-    return texture;
-  }
+    gl.activeTexture(gl.TEXTURE0);
+    var texture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_CUBE_MAP, texture);
+    gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    for(var i = 0; i < 6; ++i) {
+        var image = document.createElement('img');
+        image.crossorigin = 'anonymous';
+        image.textarget = gl.TEXTURE_CUBE_MAP_POSITIVE_X + i;
+        image.onload = function(event)
+        {
+            var image = event.target;
+            gl.activeTexture(gl.TEXTURE0);
+            gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+            gl.texImage2D(image.textarget, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
+            ++g_tex_ready;
+        };
+        image.src = cubemap[i];
+    }
+    gl.uniform1i(gl.getUniformLocation(gl.program, "texMap"), 0);
+}
 
 function render(gl, numPoints, numObjects){
+    gl.useProgram(gl.program)
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    var eye = [radius * Math.sin(angle), 1, radius * Math.cos(angle)];
-    var at = [0,0,0];
-    var up = [0,1,0]
-    var view = lookAt(eye, at, up);
 
-    var uView = gl.getUniformLocation(gl.program, "u_view");
-    gl.uniformMatrix4fv(uView, false, flatten(view));
+    if(g_tex_ready == 6){
+        var fov = 90;
+        var apsectRatio = gl.canvas.clientWidth / gl.canvas.clientHeight;
+        var projection = perspective(fov, apsectRatio, 1, 10);
 
-    // Draw object
-    for(var i = 0; i < numObjects; i++){
+        var eye = [Math.cos(angle * .5), 0, Math.sin(angle * .5)];
+        var at = [0,0,0];
+        var up = [0,1,0]
+        var camera = lookAt(eye, at, up);
+
+        var uView = gl.getUniformLocation(gl.program, "u_view");
+        gl.uniformMatrix4fv(uView, false, flatten(mat4()));
+
+        var view = inverse(camera);
+        view[3] = vec4(0, 0, 0, 1)
+
+        var viewDirectionProjectionMatrix = mult(projection, view);
+        var viewDirectionProjectionInverseMatrix = inverse(viewDirectionProjectionMatrix);
+
+        var viewDirectionProjectionInverseLocation = gl.getUniformLocation(gl.program, "u_viewDirectionProjectionInverse");
+        gl.uniformMatrix4fv(viewDirectionProjectionInverseLocation, false, flatten(viewDirectionProjectionInverseMatrix));
+
         var rotation = rotateY(0);
         var scale = scalem(0.5, 0.5, 0.5);
         var move = translate(0, 0, 0);
-        var model2 = mult(move, rotation);
+        var model2 = mat4();
 
         var uModel = gl.getUniformLocation(gl.program, "u_model");
         gl.uniformMatrix4fv(uModel, false, flatten(model2));
@@ -141,9 +123,15 @@ function render(gl, numPoints, numObjects){
         gl.vertexAttribPointer(vPosition, 3, gl.FLOAT, false, 0, 0);
         gl.enableVertexAttribArray(vPosition);
 
+        var temp = [
+            vec3(-1, -1, 0.999), vec3(1, -1, 0.999),vec3(-1, 1, 0.999),vec3(-1, 1, 0.999),vec3(1, -1, 0.999), vec3(1, 1, 0.999)
+        ]
+
         gl.drawArrays(gl.TRIANGLES, 0, numPoints);
     }
 }
+
+
 
 function initSphere(gl, polygon, numOfSubdivs){
     points = []
@@ -153,9 +141,12 @@ function initSphere(gl, polygon, numOfSubdivs){
         divideTriangle(polygon[index], polygon[(index+1)%polygon.length], polygon[(index+2)%polygon.length], numOfSubdivs)
     }
 
+    points.push(vec3(-1, -1, 0.999), vec3(1, -1, 0.999),vec3(-1, 1, 0.999),vec3(-1, 1, 0.999),vec3(1, -1, 0.999), vec3(1, 1, 0.999))
+
     gl.deleteBuffer(gl.vBuffer);
     gl.vBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, gl.vBuffer);
+
     gl.bufferData(gl.ARRAY_BUFFER, flatten(points), gl.STATIC_DRAW);
     
 
