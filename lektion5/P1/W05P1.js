@@ -81,7 +81,7 @@ window.onload = function init(){
         shininess = event.target.value;
     })
 
-    function tick(){angle+=0.01; render(gl, view, model); requestAnimationFrame(tick); }
+    function tick(){angle+=0.01; renderCube(gl, view, model); requestAnimationFrame(tick); }
     tick();
 }
 
@@ -131,7 +131,7 @@ function onReadOBJFile(fileString, fileName, gl, o, scale, reverse) {
     g_objDoc = objDoc;
 }
 
-function render(gl, view, model){
+function renderCube(gl, view, model){
     if(!g_drawingInfo && g_objDoc && g_objDoc.isMTLComplete()) {
         g_drawingInfo = onReadComplete(gl, model, g_objDoc)
     }

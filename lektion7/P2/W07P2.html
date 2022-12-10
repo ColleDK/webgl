@@ -12,11 +12,11 @@
         uniform mat4 u_projection;
         uniform vec4 u_lightPosition;
         uniform vec3 u_lightEmission;
-        attribute vec3 aPosition;
+        attribute vec3 a_Position;
         varying vec4 vColor;
         varying vec3 vPosition;
         void main(){
-            vec4 normal = normalize(vec4(aPosition, 1.0));
+            vec4 normal = normalize(vec4(a_Position, 1.0));
             vec3 pos = (u_view * normal).xyz;
             vec3 light = (u_view * u_lightPosition).xyz;
             vec3 w_i = u_lightPosition.w == 0.0 ? normalize(light) : normalize(light - pos);
@@ -25,19 +25,18 @@
             vec3 objectColor = vec3(0.5, 0.5, 0.5);
             
             vColor = vec4(objectColor * u_lightEmission, 1.0) * max(theta, 0.0) + vec4(u_lightEmission * vec3(0.5, 0.5, 0.5), 1.0);
-            vPosition = aPosition - vec3(0, 0, 0);
+            vPosition = a_Position - vec3(0, 0, 0);
 
-            gl_Position = u_projection * u_view * u_model * vec4(aPosition, 1.0);
+            gl_Position = u_projection * u_view * u_model * vec4(a_Position, 1.0);
         }
     </script>
     <script id="fragment-shader" type="x-shader/x-fragment">
         precision mediump float;
         uniform samplerCube u_texture;
-        uniform mat4 u_viewDirectionProjectionInverse;
         varying vec4 vColor;
         varying vec3 vPosition;
         void main() {
-            vec4 normal = u_viewDirectionProjectionInverse * vec4(vPosition, 1.0);
+            vec4 normal = vec4(vPosition, 1.0);
             gl_FragColor = vColor * textureCube(u_texture, normalize(normal.xyz / normal.w));
         }
     </script>

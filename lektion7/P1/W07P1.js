@@ -66,7 +66,7 @@ window.onload = function init(){
 
     initTexture(gl);
 
-    function tick(){ if(shouldOrbit){angle+=0.01}; render(gl, points.length, numObjects); requestAnimationFrame(tick); }
+    function tick(){ if(shouldOrbit){angle+=0.01}; renderCube(gl, points.length, numObjects); requestAnimationFrame(tick); }
     tick();
 }
 
@@ -103,7 +103,7 @@ function initTexture(gl)
     gl.uniform1i(gl.getUniformLocation(gl.program, "texMap"), 0);
 }
 
-function render(gl, numPoints, numObjects){
+function renderCube(gl, numPoints, numObjects){
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     var eye = [radius * Math.sin(angle), 1, radius * Math.cos(angle)];
     var at = [0,0,0];
@@ -144,8 +144,6 @@ function initSphere(gl, polygon, numOfSubdivs){
     gl.vBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, gl.vBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, flatten(points), gl.STATIC_DRAW);
-    
-
 }
 
 function divideTriangle(a, b, c, numOfTimes){
