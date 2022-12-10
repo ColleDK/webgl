@@ -33,11 +33,19 @@
     <script id="fragment-shader" type="x-shader/x-fragment">
         precision mediump float;
         uniform samplerCube u_texture;
+        uniform mat4 u_viewDirectionProjectionInverse;
+        uniform float u_reflective;
+        uniform vec3 u_eyePosition;
         varying vec4 vColor;
         varying vec3 vPosition;
         void main() {
-            vec4 normal = vec4(vPosition, 1.0);
-            gl_FragColor = vColor * textureCube(u_texture, normalize(normal.xyz / normal.w));
+            vec4 normal = u_viewDirectionProjectionInverse * vec4(vPosition, 1.0);
+            if (u_reflective > 0.5){
+                vec3 incident = vPosition - u_eyePosition;
+                gl_FragColor = vColor * textureCube(u_texture, reflect(incident, normalize(normal.xyz / normal.w)));
+            } else {
+                gl_FragColor = vColor * textureCube(u_texture, normalize(normal.xyz / normal.w));
+            }
         }
     </script>
     <script type="text/javascript" src="../../common/MV.js"></script>

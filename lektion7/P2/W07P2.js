@@ -4,6 +4,8 @@ var angle = 0;
 var radius = 3;
 var shouldOrbit = true;
 var texSize = 64;
+var sphereProjection = [];
+var sphereView = [];
 
 window.onload = function init(){
     var canvas = document.getElementById("c");
@@ -43,6 +45,8 @@ function renderSphere(gl, numPoints, buffer){
         var up = [0,1,0]
         var view = lookAt(eye, at, up);
 
+        sphereView = view;
+
         var uView = gl.getUniformLocation(gl.program, "u_view");
         gl.uniformMatrix4fv(uView, false, flatten(view));
 
@@ -52,6 +56,15 @@ function renderSphere(gl, numPoints, buffer){
 
         var uModel = gl.getUniformLocation(gl.program, "u_model");
         gl.uniformMatrix4fv(uModel, false, flatten(model2));
+
+        var uViewDirection = gl.getUniformLocation(gl.program, "u_viewDirectionProjectionInverse");
+        gl.uniformMatrix4fv(uViewDirection, false, flatten(mat4()));
+
+        var uReflective = gl.getUniformLocation(gl.program, "u_reflective");
+        gl.uniform1f(uReflective, 1.0);
+
+        var uEyePosition = gl.getUniformLocation(gl.program, "u_eyePosition");
+        gl.uniform3fv(uEyePosition, eye);
 
         // Get position attribute location
         gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
@@ -70,6 +83,21 @@ function renderCube(gl, numPoints, buffer){
 
         var uModel = gl.getUniformLocation(gl.programcube, "u_model");
         gl.uniformMatrix4fv(uModel, false, flatten(mat4()));
+
+        var invView = inverse(sphereView);
+
+        invView[3] = vec4(0, 0, 0, 1);
+
+        var viewDir = mult(sphereProjection, invView);
+
+        var uViewDirection = gl.getUniformLocation(gl.programcube, "u_viewDirectionProjectionInverse");
+        gl.uniformMatrix4fv(uViewDirection, false, flatten(inverse(viewDir)));
+
+        var uReflective = gl.getUniformLocation(gl.programcube, "u_reflective");
+        gl.uniform1f(uReflective, 0.0);
+
+        var uEyePosition = gl.getUniformLocation(gl.programcube, "u_eyePosition");
+        gl.uniform3fv(uEyePosition, flatten(vec3(0, 0, 0)));
 
         // Get position attribute location
         gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
@@ -126,6 +154,8 @@ function setupSphere(gl){
     var fov = 45;
     var apsectRatio = gl.canvas.clientWidth / gl.canvas.clientHeight;
     var projection = perspective(fov, apsectRatio, 1, 10);
+
+    sphereProjection = projection;
 
     var uProjection = gl.getUniformLocation(gl.program, "u_projection");
     gl.uniformMatrix4fv(uProjection, false, flatten(projection));
