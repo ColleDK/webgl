@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+    <body>
+    <h1>Computer graphics lektion 9</h1>
+    <canvas id="c" height="700" width="700"></canvas>
+    <script type="text/javascript" src="W08P1.js"></script>
+    <script type="text/javascript" src="../../common/webgl-utils.js"></script>
+    <script type="text/javascript" src="../../common/initShaders.js"></script>
+    <script id="vertex-shader" type="x-shader/x-vertex">
+        uniform mat4 u_projection;
+        uniform mat4 u_view;
+        attribute float a_texturestyle;
+        attribute vec3 a_Position;
+        attribute vec2 a_texcoord;
+        varying vec2 fTexCoord;
+        varying float v_texturestyle;
+        void main(){
+            gl_Position = u_projection * u_view * vec4(a_Position, 1.0);
+            v_texturestyle = a_texturestyle;
+            fTexCoord = a_texcoord;
+        }
+    </script>
+    <script id="fragment-shader" type="x-shader/x-fragment">
+        precision mediump float;
+        uniform sampler2D texMap;
+        uniform sampler2D texMap2;
+        varying vec2 fTexCoord;
+        varying float v_texturestyle;
+        void main() {
+            if (v_texturestyle > 0.5){
+                gl_FragColor = texture2D(texMap2, fTexCoord);
+            } else {
+                gl_FragColor = texture2D(texMap, fTexCoord);
+            }
+        }
+    </script>
+    <script type="text/javascript" src="../../common/MV.js"></script>
+    </body>
+</html>
