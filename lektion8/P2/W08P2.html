@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+    <body>
+    <h1>Computer graphics lektion 9</h1>
+    <canvas id="c" height="700" width="700"></canvas>
+    <script type="text/javascript" src="W08P2.js"></script>
+    <script type="text/javascript" src="../../common/webgl-utils.js"></script>
+    <script type="text/javascript" src="../../common/initShaders.js"></script>
+    <script id="vertex-shader" type="x-shader/x-vertex">
+        uniform mat4 u_projection;
+        uniform mat4 u_view;
+        uniform mat4 u_lightpos;
+        uniform mat4 u_mp;
+        uniform vec3 u_lightpos2;
+        attribute float a_texturestyle;
+        attribute vec3 a_Position;
+        attribute vec2 a_texcoord;
+        attribute float a_shadow;
+        varying vec2 fTexCoord;
+        varying float v_texturestyle;
+        void main(){
+            if(a_shadow > 0.0){
+                mat4 t_pl = (u_projection * u_view) * u_lightpos;
+                mat4 t_pl2 = (u_projection * u_view) * -u_lightpos;
+                mat4 m_s = t_pl * u_mp * t_pl2;
+
+                gl_Position = m_s * vec4(a_Position, 1.0);
+                v_texturestyle = 2.0;
+                fTexCoord = a_texcoord;
+            } else {
+                gl_Position = u_projection * u_view * vec4(a_Position, 1.0);
+                v_texturestyle = a_texturestyle;
+                fTexCoord = a_texcoord;
+            }
+        }
+    </script>
+    <script id="fragment-shader" type="x-shader/x-fragment">
+        precision mediump float;
+        uniform sampler2D texMap;
+        uniform sampler2D texMap2;
+        varying vec2 fTexCoord;
+        varying float v_texturestyle;
+        void main() {
+            if (v_texturestyle > 1.5){
+                gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+            } else if (v_texturestyle > 0.5){
+                gl_FragColor = texture2D(texMap2, fTexCoord);
+            } else {
+                gl_FragColor = texture2D(texMap, fTexCoord);
+            }
+        }
+    </script>
+    <script type="text/javascript" src="../../common/MV.js"></script>
+    <br>
+    <button id="orbit_btn">Orbit on/off</button>
+    </body>
+</html>
