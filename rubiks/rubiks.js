@@ -1,15 +1,8 @@
-/**
- * The list of objects added to the view
- */
-var objects = []
-
-/**
- * Type of objects supported currently
- */
-var types = {
-    CUBE: "cube",
-    SPHERE: "sphere"
-}
+const numObjects = 9
+var angle = 0.0;
+var radius = 20;
+var spacing = 0.2;
+var cubeSize = 2.0;
 
 /**
  * WebGL init function
@@ -23,7 +16,7 @@ window.onload = function init(){
 
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
-    gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    gl.clearColor(1.0, 1.0, 1.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     gl.enable(gl.DEPTH_TEST);
@@ -37,57 +30,27 @@ window.onload = function init(){
     gl.useProgram(gl.program);
 
     gl.program.a_Position = gl.getAttribLocation(gl.program, "a_Position");
+    gl.program.a_Normal = gl.getAttribLocation(gl.program, "a_Normal");
 
-    var sphere_btn = document.getElementById("sphere_btn");
-
-    sphere_btn.addEventListener("click", (event) => {
-        createNewObj(types.SPHERE, gl)
-        objects[objects.length - 1].move((objects.length - 1) * 0.3, 0, 0)
-        objects[objects.length - 1].scale(1-(objects.length - 1) * 0.1, 1 - (objects.length - 1) * 0.1, 1- (objects.length - 1) * 0.1)
-    })
-
-    var background_picker = document.getElementById("color_background");
-    background_picker.addEventListener("input", (event) => {
-        console.log(event.target.value)
-        let color = event.target.value
-        let rgb = hexToRgbA(color)
-        console.log(rgb)
-        gl.clearColor(rgb[0] / 255, rgb[1] / 255, rgb[2] / 255, 1.0);
-    })
-
-    canvas.addEventListener("click", (event) => {
-        // Get mouse position in draw area
-        var bbox = event.target.getBoundingClientRect();
-        var mousepos = vec2(
-            (2 * ((event.clientX - bbox.left) / canvas.width)) - 1,
-            (2 * ((canvas.height - (event.clientY - bbox.top) - 1) / canvas.height)) - 1
-        )
-
-        checkRayIntersection(mousepos[0], mousepos[1])
-    })
+    let cube = new RubiksCube()
+    cube.create();
+    console.log(cube.vertices)
 
     var q_rot = new Quaternion();
     var q_inc = new Quaternion();
 
     initEventHandlers(canvas, q_rot, q_inc);
 
-    function tick(){q_rot = q_rot.multiply(q_inc); render(gl, q_rot); requestAnimationFrame(tick); }
+    function tick(){q_rot = q_rot.multiply(q_inc);render(gl, cube, q_rot); requestAnimationFrame(tick); }
     tick();
 }
+
 
 /**
  * Function for rendering objects
  */
-function render(gl, q_rot){
+function render(gl, cube, q_rot){
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-   /* 
-    var vertices = []
-
-    objects.forEach(o => {
-        o.vertices.forEach(e => {
-            vertices.push(e)
-        })
-    });
 
     var fov = 90;
     var apsectRatio = gl.canvas.clientWidth / gl.canvas.clientHeight;
@@ -96,72 +59,83 @@ function render(gl, q_rot){
     var uProjection = gl.getUniformLocation(gl.program, "u_projection");
     gl.uniformMatrix4fv(uProjection, false, flatten(projection));
 
-    var eye = [1, 1, 1];
-    var at = [0,0,0];
-    var up = [0,1,0];
-    var view = lookAt(eye, at, up);
+    var eye = vec3(0, 0, 17);
+    var at = vec3(0,0,0);
+    var up = vec3(0,1,0);
+    var view = lookAt(add(q_rot.apply(eye), at), at, q_rot.apply(up));
+    var view_move = translate(-(cubeSize + spacing), -(cubeSize + spacing), -(cubeSize + spacing))
+    var new_view = mult(view, view_move)
 
     var uView = gl.getUniformLocation(gl.program, "u_view");
-    gl.uniformMatrix4fv(uView, false, flatten(view));
+    gl.uniformMatrix4fv(uView, false, flatten(new_view));
 
     var uModel = gl.getUniformLocation(gl.program, "u_model");
     gl.uniformMatrix4fv(uModel, false, flatten(mat4()));
 
-    var buffer = createEmptyArrayBuffer(gl, gl.program.a_Position, 3, gl.FLOAT)
-    initArrayBuffer(gl, buffer, vertices)
+    // Draw object
+    for(var i = 0; i < 3; i++){
+        for(var j = 0; j < 3; j++){
+            for(var k = 0; k < 3; k++){
+                if(i === 1 && j === 1 && k === 1){
+                    // Exclude the inner most point
+                } else {
+                    const current_cube = cube.cubes[i][j][k];
+                    switch(i){
+                        case 0:
+                            current_cube.setNormal([
+                                vec3(1.0, 0.0, 0.0),
+                                vec3(1.0, 0.0, 0.0),
+                                vec3(1.0, 0.0, 0.0),
+                                vec3(1.0, 0.0, 0.0),
+                                vec3(1.0, 0.0, 0.0),
+                                vec3(0.0, 0.0, 0.0),
+                                vec3(0.0, 0.0, 0.0),
+                                vec3(0.0, 0.0, 0.0),
+                            ])
+                            break;
+                        case 1:
+                            break;
+                        case 2:
+                            current_cube.setNormal([
+                                vec3(0.0, 0.0, 0.0),
+                                vec3(0.0, 0.0, 0.0),
+                                vec3(0.0, 0.0, 0.0),
+                                vec3(0.0, 1.0, 0.0),
+                                vec3(0.0, 1.0, 0.0),
+                                vec3(0.0, 1.0, 0.0),
+                                vec3(0.0, 1.0, 0.0),
+                                vec3(0.0, 1.0, 0.0),
+                            ])
+                            break;
+                    }
+                    var indexBuffer = gl.createBuffer();
 
-    gl.drawArrays(gl.TRIANGLES, 0, vertices.length);
-*/
-    
-    objects.forEach(obj => {
-        gl.useProgram(obj.program)
-        initArrayBuffer(gl, obj)
+                    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+                    gl.bufferData(
+                        gl.ELEMENT_ARRAY_BUFFER,
+                        new Uint16Array(current_cube.indeces),
+                        gl.STATIC_DRAW
+                    )
+                    var normalBuffer = createEmptyArrayBuffer(gl, gl.program.a_Normal, 3, gl.FLOAT)
+                    initArrayBuffer(gl, normalBuffer, current_cube.normals)
 
-        var fov = 90;
-        var apsectRatio = gl.canvas.clientWidth / gl.canvas.clientHeight;
-        var projection = perspective(fov, apsectRatio, 1, 100);
+                    var buffer = createEmptyArrayBuffer(gl, gl.program.a_Position, 3, gl.FLOAT)
+                    initArrayBuffer(gl, buffer, current_cube.vertices)
 
-        var uProjection = gl.getUniformLocation(obj.program, "u_projection");
-        gl.uniformMatrix4fv(uProjection, false, flatten(projection));
-
-        var eye = vec3(0, 0, 7);
-        var at = vec3(0,0,0);
-        var up = vec3(0,1,0);
-        var view = lookAt(add(q_rot.apply(eye), at), at, q_rot.apply(up));
-
-        var uView = gl.getUniformLocation(obj.program, "u_view");
-        gl.uniformMatrix4fv(uView, false, flatten(view));
-
-        var uModel = gl.getUniformLocation(obj.program, "u_model");
-        gl.uniformMatrix4fv(uModel, false, flatten(obj.model));
-
-        gl.drawArrays(gl.TRIANGLES, 0, obj.vertices.length);
-    });
-}
-
-
-/**
- * Function for creating a new object of a cube or sphere
- */
-function createNewObj(type, gl){
-    var obj = new OBJ();
-
-    obj.program = initShaders(gl, "vertex-shader", "fragment-shader");
-    obj.vBuffer = createEmptyArrayBuffer(gl, obj.program.a_Position, 3, gl.FLOAT)
-    obj.program.a_Position = gl.getAttribLocation(obj.program, "a_Position")
-
-    switch(type){
-        case types.CUBE:
-            //obj.createCube();
-            break;
-        case types.SPHERE:
-            obj.createSphere();
-            break;
-        default:
-            break;
+                    var move = translate(i*(cubeSize + spacing), j*(cubeSize + spacing), k*(cubeSize + spacing));
+                    if(i === 1 && j === 2){
+                        //var rotation = rotateY(90);
+                        //move = mult(move, rotation)
+                    }
+        
+                    var uModel = gl.getUniformLocation(gl.program, "u_model");
+                    gl.uniformMatrix4fv(uModel, false, flatten(move));
+                
+                    gl.drawElements(gl.TRIANGLES, current_cube.indeces.length, gl.UNSIGNED_SHORT, 0);
+                }
+            }
+        }
     }
-
-    objects.push(obj)
 }
 
 /**
@@ -180,10 +154,10 @@ function createEmptyArrayBuffer(gl, a_attribute, num, type) {
 /**
  * Function for setting data from object onto array buffer
  */
-function initArrayBuffer(gl, obj) {
+function initArrayBuffer(gl, buffer, data) {
     // Write date into the buffer object
-    gl.bindBuffer(gl.ARRAY_BUFFER, obj.vBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, flatten(obj.vertices), gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(data), gl.STATIC_DRAW);
 }
 
 /**
@@ -256,27 +230,4 @@ function project_to_sphere(x, y) {
     else       // On hyperbola
       z = t * t / d;
     return z;
-}
-
-/**
- * Get background color from picker
- */
-function getRGBColor(color){
-    console.log(hexToRgb(color.value))
-}
-
-/**
- * Convert hex color code to RGB
- */
-function hexToRgbA(hex){
-    var c;
-    if(/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)){
-        c= hex.substring(1).split('');
-        if(c.length== 3){
-            c= [c[0], c[0], c[1], c[1], c[2], c[2]];
-        }
-        c= '0x'+c.join('');
-        return [(c>>16)&255, (c>>8)&255, c&255];
-    }
-    throw new Error('Bad Hex');
 }
