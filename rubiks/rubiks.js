@@ -1,8 +1,35 @@
 const numObjects = 9
 var angle = 0.0;
 var radius = 20;
-var spacing = 0.2;
+var spacing = 0.1;
 var cubeSize = 2.0;
+var num_of_sides = 3;
+
+const BLACK = [0.0, 0.0, 0.0, 1.0];
+const YELLOW = [1.0, 1.0, 0.0, 1.0];
+const WHITE = [1.0, 1.0, 1.0, 1.0];
+const ORANGE = [1.0, 0.5, 0.0, 1.0];
+const RED = [1.0, 0.0, 0.0, 1.0];
+const BLUE = [0.0, 0.0, 1.0, 1.0];
+const GREEN = [0.0, 1.0, 0.0, 1.0];
+const COLORS = [
+  // Back
+  YELLOW, YELLOW, YELLOW, YELLOW,
+  // Front
+  WHITE, WHITE, WHITE, WHITE,
+  // Left
+  ORANGE, ORANGE, ORANGE, ORANGE,
+  // Right
+  RED, RED, RED, RED,
+  // Bottom
+  BLUE, BLUE, BLUE, BLUE,
+  // Top
+  GREEN, GREEN, GREEN, GREEN,
+  // Inside
+  BLACK,
+];
+
+var vertexColors = [];
 
 /**
  * WebGL init function
@@ -16,7 +43,7 @@ window.onload = function init(){
 
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
-    gl.clearColor(1.0, 1.0, 1.0, 1.0);
+    gl.clearColor(0.3921, 0.5843, 0.9294, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     gl.enable(gl.DEPTH_TEST);
@@ -30,11 +57,46 @@ window.onload = function init(){
     gl.useProgram(gl.program);
 
     gl.program.a_Position = gl.getAttribLocation(gl.program, "a_Position");
-    gl.program.a_Normal = gl.getAttribLocation(gl.program, "a_Normal");
+    gl.program.a_Color = gl.getAttribLocation(gl.program, "a_Color");
+    gl.program.u_view = gl.getUniformLocation(gl.program, "u_view");
+    gl.program.u_projection = gl.getUniformLocation(gl.program, "u_projection");
 
-    let cube = new RubiksCube()
-    cube.create();
-    console.log(cube.vertices)
+    var cube = new RubiksCube()
+    cube.create(num_of_sides);
+
+    var rot_x_btn = document.getElementById("rot_x");
+    rot_x_btn.addEventListener("click", () => {
+        cube.rotateX(2)
+    })
+
+    var rot_y_btn = document.getElementById("rot_y");
+    rot_y_btn.addEventListener("click", () => {
+        cube.rotateY(2)
+    })
+
+    var rot_z_btn = document.getElementById("rot_z");
+    rot_z_btn.addEventListener("click", () => {
+        cube.rotateZ(2)
+    })
+    /*
+    var inc_btn = document.getElementById("inc_btn");
+    var red_btn = document.getElementById("red_btn");
+
+    inc_btn.addEventListener("click", () => {
+        num_of_sides++;
+        var new_cube = new RubiksCube();
+        new_cube.create(num_of_sides);
+
+        cube = new_cube;
+    })
+
+    red_btn.addEventListener("click", () => {
+        num_of_sides--;
+        var new_cube = new RubiksCube();
+        new_cube.create(num_of_sides);
+
+        cube = new_cube;
+    })*/
 
     var q_rot = new Quaternion();
     var q_inc = new Quaternion();
@@ -52,91 +114,99 @@ window.onload = function init(){
 function render(gl, cube, q_rot){
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+    // Create the perspective view
     var fov = 90;
     var apsectRatio = gl.canvas.clientWidth / gl.canvas.clientHeight;
     var projection = perspective(fov, apsectRatio, 1, 100);
 
-    var uProjection = gl.getUniformLocation(gl.program, "u_projection");
-    gl.uniformMatrix4fv(uProjection, false, flatten(projection));
+    gl.uniformMatrix4fv(gl.program.u_projection, false, flatten(projection));
 
     var eye = vec3(0, 0, 17);
     var at = vec3(0,0,0);
     var up = vec3(0,1,0);
+    // Create translation for quaternion
     var view = lookAt(add(q_rot.apply(eye), at), at, q_rot.apply(up));
-    var view_move = translate(-(cubeSize + spacing), -(cubeSize + spacing), -(cubeSize + spacing))
-    var new_view = mult(view, view_move)
 
-    var uView = gl.getUniformLocation(gl.program, "u_view");
-    gl.uniformMatrix4fv(uView, false, flatten(new_view));
+    gl.uniformMatrix4fv(gl.program.u_view, false, flatten(view));
 
-    var uModel = gl.getUniformLocation(gl.program, "u_model");
-    gl.uniformMatrix4fv(uModel, false, flatten(mat4()));
+    // Iterate all cubes
+    cube.cubes.forEach(function (c1, i){
+        c1.forEach(function (c2, j){
+            c2.forEach(function (_, k){
+                const current_cube = cube.cubes[i][j][k]
 
-    // Draw object
-    for(var i = 0; i < 3; i++){
-        for(var j = 0; j < 3; j++){
-            for(var k = 0; k < 3; k++){
-                if(i === 1 && j === 1 && k === 1){
-                    // Exclude the inner most point
-                } else {
-                    const current_cube = cube.cubes[i][j][k];
-                    switch(i){
-                        case 0:
-                            current_cube.setNormal([
-                                vec3(1.0, 0.0, 0.0),
-                                vec3(1.0, 0.0, 0.0),
-                                vec3(1.0, 0.0, 0.0),
-                                vec3(1.0, 0.0, 0.0),
-                                vec3(1.0, 0.0, 0.0),
-                                vec3(0.0, 0.0, 0.0),
-                                vec3(0.0, 0.0, 0.0),
-                                vec3(0.0, 0.0, 0.0),
-                            ])
-                            break;
-                        case 1:
-                            break;
-                        case 2:
-                            current_cube.setNormal([
-                                vec3(0.0, 0.0, 0.0),
-                                vec3(0.0, 0.0, 0.0),
-                                vec3(0.0, 0.0, 0.0),
-                                vec3(0.0, 1.0, 0.0),
-                                vec3(0.0, 1.0, 0.0),
-                                vec3(0.0, 1.0, 0.0),
-                                vec3(0.0, 1.0, 0.0),
-                                vec3(0.0, 1.0, 0.0),
-                            ])
-                            break;
-                    }
-                    var indexBuffer = gl.createBuffer();
+                // Create the colors to be displayed
+                colorDisplay(i, j, k);
 
-                    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-                    gl.bufferData(
-                        gl.ELEMENT_ARRAY_BUFFER,
-                        new Uint16Array(current_cube.indeces),
-                        gl.STATIC_DRAW
-                    )
-                    var normalBuffer = createEmptyArrayBuffer(gl, gl.program.a_Normal, 3, gl.FLOAT)
-                    initArrayBuffer(gl, normalBuffer, current_cube.normals)
+                var cBuffer = gl.createBuffer();
+                gl.bindBuffer(gl.ARRAY_BUFFER, cBuffer);
+                gl.bufferData(gl.ARRAY_BUFFER, flatten(vertexColors), gl.STATIC_DRAW);
+                gl.vertexAttribPointer(gl.program.a_Color, 4, gl.FLOAT, false, 0 , 0);
+                gl.enableVertexAttribArray(gl.program.a_Color);
 
-                    var buffer = createEmptyArrayBuffer(gl, gl.program.a_Position, 3, gl.FLOAT)
-                    initArrayBuffer(gl, buffer, current_cube.vertices)
+                // Create the index buffer
+                var indexBuffer = gl.createBuffer();
 
-                    var move = translate(i*(cubeSize + spacing), j*(cubeSize + spacing), k*(cubeSize + spacing));
-                    if(i === 1 && j === 2){
-                        //var rotation = rotateY(90);
-                        //move = mult(move, rotation)
-                    }
+                gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+                gl.bufferData(
+                    gl.ELEMENT_ARRAY_BUFFER,
+                    new Uint16Array(current_cube.indeces),
+                    gl.STATIC_DRAW
+                )
+
+                // Create the position buffer
+                var buffer = createEmptyArrayBuffer(gl, gl.program.a_Position, 3, gl.FLOAT)
+                initArrayBuffer(gl, buffer, current_cube.vertices)
+
+                // Move the cubes away from center point
+                var move = translate((i-1)*(cubeSize + spacing), (j-1)*(cubeSize + spacing), (k-1)*(cubeSize + spacing));
+
+                move = mult(current_cube.internalMatrix, move)
         
-                    var uModel = gl.getUniformLocation(gl.program, "u_model");
-                    gl.uniformMatrix4fv(uModel, false, flatten(move));
+                var uModel = gl.getUniformLocation(gl.program, "u_model");
+                gl.uniformMatrix4fv(uModel, false, flatten(move));
                 
-                    gl.drawElements(gl.TRIANGLES, current_cube.indeces.length, gl.UNSIGNED_SHORT, 0);
-                }
-            }
-        }
-    }
+                // Draw cube
+                gl.drawElements(gl.TRIANGLES, current_cube.indeces.length, gl.UNSIGNED_SHORT, 0);
+            });
+        });
+    });
 }
+
+/**
+ * Function for getting the color of the cube
+ */
+function colorDisplay(x, y, z){
+    var i;
+    for (i = 0; i < vertexColors.length; i++){
+      vertexColors[i] = COLORS[i];
+    }
+    if (x != 0){
+      makeBlack(8);
+    }
+    if (x != num_of_sides - 1){
+      makeBlack(12);
+    }
+    if (y != 0){
+      makeBlack(16);
+    }
+    if (y != num_of_sides - 1){
+      makeBlack(20);
+    }
+    if (z != 0){
+      makeBlack(0);
+    }
+    if (z != num_of_sides - 1){
+      makeBlack(4);
+    }
+    // Any non-surface faces
+    function makeBlack(start){
+      var i;
+      for (i = start; i < start+ 4; i++){
+        vertexColors[i] = COLORS[24];
+      }
+    }
+  }
 
 /**
  * Function for creating an empty array buffer
