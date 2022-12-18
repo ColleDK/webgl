@@ -4,6 +4,8 @@ var radius = 20;
 var spacing = 0.1;
 var cubeSize = 2.0;
 var num_of_sides = 3;
+var current_time_spent = 0;
+var cubePoints = []
 
 const BLACK = [0.0, 0.0, 0.0, 1.0];
 const YELLOW = [1.0, 1.0, 0.0, 1.0];
@@ -37,7 +39,7 @@ var vertexColors = [];
 window.onload = function init(){
     var canvas = document.getElementById("c");
     canvas.width  = window.innerWidth / 100 * 90;
-    canvas.height = window.innerHeight / 100 * 90;
+    canvas.height = window.innerHeight / 100 * 70;
 
     var gl = canvas.getContext("webgl");
 
@@ -54,65 +56,131 @@ window.onload = function init(){
     }
 
     gl.program = initShaders(gl, "vertex-shader", "fragment-shader");
+    gl.programcube = initShaders(gl, "vertex-shader-cube", "fragment-shader-cube");
     gl.useProgram(gl.program);
 
     gl.program.a_Position = gl.getAttribLocation(gl.program, "a_Position");
     gl.program.a_Color = gl.getAttribLocation(gl.program, "a_Color");
+    gl.program.u_model = gl.getUniformLocation(gl.program, "u_model");
     gl.program.u_view = gl.getUniformLocation(gl.program, "u_view");
     gl.program.u_projection = gl.getUniformLocation(gl.program, "u_projection");
 
     var cube = new RubiksCube()
     cube.create(num_of_sides);
 
-    var rot_x_btn = document.getElementById("rot_x");
-    rot_x_btn.addEventListener("click", () => {
-        cube.rotateX(2)
+    var rot_l_btn = document.getElementById("rot_l");
+    rot_l_btn.addEventListener("click", () => {
+        cube.turnFace(MOVES.L)
     })
 
-    var rot_y_btn = document.getElementById("rot_y");
-    rot_y_btn.addEventListener("click", () => {
-        cube.rotateY(2)
+    var rot_l_rev_btn = document.getElementById("rot_rev_l");
+    rot_l_rev_btn.addEventListener("click", () => {
+        cube.turnFace(MOVES.REV_L)
     })
 
-    var rot_z_btn = document.getElementById("rot_z");
-    rot_z_btn.addEventListener("click", () => {
-        cube.rotateZ(2)
-    })
-    /*
-    var inc_btn = document.getElementById("inc_btn");
-    var red_btn = document.getElementById("red_btn");
-
-    inc_btn.addEventListener("click", () => {
-        num_of_sides++;
-        var new_cube = new RubiksCube();
-        new_cube.create(num_of_sides);
-
-        cube = new_cube;
+    var rot_m_btn = document.getElementById("rot_m");
+    rot_m_btn.addEventListener("click", () => {
+        cube.turnFace(MOVES.M)
     })
 
-    red_btn.addEventListener("click", () => {
-        num_of_sides--;
-        var new_cube = new RubiksCube();
-        new_cube.create(num_of_sides);
+    var rot_m_rev_btn = document.getElementById("rot_rev_m");
+    rot_m_rev_btn.addEventListener("click", () => {
+        cube.turnFace(MOVES.REV_M)
+    })
 
-        cube = new_cube;
-    })*/
+    var rot_r_btn = document.getElementById("rot_r");
+    rot_r_btn.addEventListener("click", () => {
+        cube.turnFace(MOVES.R)
+    })
+
+    var rot_r_rev_btn = document.getElementById("rot_rev_r");
+    rot_r_rev_btn.addEventListener("click", () => {
+        cube.turnFace(MOVES.REV_R)
+    })
+
+    var rot_b_btn = document.getElementById("rot_b");
+    rot_b_btn.addEventListener("click", () => {
+        cube.turnFace(MOVES.B)
+    })
+
+    var rot_b_rev_btn = document.getElementById("rot_rev_b");
+    rot_b_rev_btn.addEventListener("click", () => {
+        cube.turnFace(MOVES.REV_B)
+    })
+
+    var rot_e_btn = document.getElementById("rot_e");
+    rot_e_btn.addEventListener("click", () => {
+        cube.turnFace(MOVES.E)
+    })
+
+    var rot_e_rev_btn = document.getElementById("rot_rev_e");
+    rot_e_rev_btn.addEventListener("click", () => {
+        cube.turnFace(MOVES.REV_E)
+    })
+
+    var rot_t_btn = document.getElementById("rot_t");
+    rot_t_btn.addEventListener("click", () => {
+        cube.turnFace(MOVES.T)
+    })
+
+    var rot_t_rev_btn = document.getElementById("rot_rev_t");
+    rot_t_rev_btn.addEventListener("click", () => {
+        cube.turnFace(MOVES.REV_T)
+    })
+
+    var rot_f_btn = document.getElementById("rot_f");
+    rot_f_btn.addEventListener("click", () => {
+        cube.turnFace(MOVES.F)
+    })
+
+    var rot_f_rev_btn = document.getElementById("rot_rev_f");
+    rot_f_rev_btn.addEventListener("click", () => {
+        cube.turnFace(MOVES.REV_F)
+    })
+
+    var rot_s_btn = document.getElementById("rot_s");
+    rot_s_btn.addEventListener("click", () => {
+        cube.turnFace(MOVES.S)
+    })
+
+    var rot_s_rev_btn = document.getElementById("rot_rev_s");
+    rot_s_rev_btn.addEventListener("click", () => {
+        cube.turnFace(MOVES.REV_S)
+    })
+
+    var rot_k_btn = document.getElementById("rot_k");
+    rot_k_btn.addEventListener("click", () => {
+        cube.turnFace(MOVES.K)
+    })
+
+    var rot_k_rev_btn = document.getElementById("rot_rev_k");
+    rot_k_rev_btn.addEventListener("click", () => {
+        cube.turnFace(MOVES.REV_K)
+    })
 
     var q_rot = new Quaternion();
     var q_inc = new Quaternion();
+    var reset_view_btn = document.getElementById("reset_view");
+    reset_view_btn.addEventListener("click", () => {
+      q_rot = new Quaternion();
+      q_inc.setIdentity();
+    })
 
     initEventHandlers(canvas, q_rot, q_inc);
+    setup_timer();
 
-    function tick(){q_rot = q_rot.multiply(q_inc);render(gl, cube, q_rot); requestAnimationFrame(tick); }
+    var cubeBuffer = setupCube(gl);
+
+    function tick(){q_rot = q_rot.multiply(q_inc);render(gl, cube, q_rot, cubeBuffer); requestAnimationFrame(tick); }
     tick();
 }
-
 
 /**
  * Function for rendering objects
  */
-function render(gl, cube, q_rot){
+function render(gl, cube, q_rot, cubebuffer){
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.useProgram(gl.program)
 
     // Create the perspective view
     var fov = 90;
@@ -126,51 +194,145 @@ function render(gl, cube, q_rot){
     var up = vec3(0,1,0);
     // Create translation for quaternion
     var view = lookAt(add(q_rot.apply(eye), at), at, q_rot.apply(up));
-
     gl.uniformMatrix4fv(gl.program.u_view, false, flatten(view));
 
     // Iterate all cubes
     cube.cubes.forEach(function (c1, i){
         c1.forEach(function (c2, j){
             c2.forEach(function (_, k){
-                const current_cube = cube.cubes[i][j][k]
+              const current_cube = cube.cubes[i][j][k]
 
-                // Create the colors to be displayed
-                colorDisplay(i, j, k);
+              // Create the colors to be displayed
+              colorDisplay(i, j, k);
 
-                var cBuffer = gl.createBuffer();
-                gl.bindBuffer(gl.ARRAY_BUFFER, cBuffer);
-                gl.bufferData(gl.ARRAY_BUFFER, flatten(vertexColors), gl.STATIC_DRAW);
-                gl.vertexAttribPointer(gl.program.a_Color, 4, gl.FLOAT, false, 0 , 0);
-                gl.enableVertexAttribArray(gl.program.a_Color);
+              var cBuffer = gl.createBuffer();
+              gl.bindBuffer(gl.ARRAY_BUFFER, cBuffer);
+              gl.bufferData(gl.ARRAY_BUFFER, flatten(vertexColors), gl.STATIC_DRAW);
+              gl.vertexAttribPointer(gl.program.a_Color, 4, gl.FLOAT, false, 0 , 0);
+              gl.enableVertexAttribArray(gl.program.a_Color);
 
-                // Create the index buffer
-                var indexBuffer = gl.createBuffer();
+              // Create the index buffer
+              var indexBuffer = gl.createBuffer();
 
-                gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-                gl.bufferData(
-                    gl.ELEMENT_ARRAY_BUFFER,
-                    new Uint16Array(current_cube.indeces),
-                    gl.STATIC_DRAW
-                )
+              gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+              gl.bufferData(
+                  gl.ELEMENT_ARRAY_BUFFER,
+                  new Uint16Array(current_cube.indeces),
+                  gl.STATIC_DRAW
+              )
 
-                // Create the position buffer
-                var buffer = createEmptyArrayBuffer(gl, gl.program.a_Position, 3, gl.FLOAT)
-                initArrayBuffer(gl, buffer, current_cube.vertices)
+              // Create the position buffer
+              var buffer = createEmptyArrayBuffer(gl, gl.program.a_Position, 3, gl.FLOAT)
+              initArrayBuffer(gl, buffer, current_cube.vertices)
 
-                // Move the cubes away from center point
-                var move = translate((i-1)*(cubeSize + spacing), (j-1)*(cubeSize + spacing), (k-1)*(cubeSize + spacing));
+              // Move the cubes away from center point
+              var move = translate((i-1)*(cubeSize + spacing), (j-1)*(cubeSize + spacing), (k-1)*(cubeSize + spacing));
 
-                move = mult(current_cube.internalMatrix, move)
+              move = mult(current_cube.internalMatrix, move);
         
-                var uModel = gl.getUniformLocation(gl.program, "u_model");
-                gl.uniformMatrix4fv(uModel, false, flatten(move));
+              gl.uniformMatrix4fv(gl.program.u_model, false, flatten(move));
                 
-                // Draw cube
-                gl.drawElements(gl.TRIANGLES, current_cube.indeces.length, gl.UNSIGNED_SHORT, 0);
+              // Draw cube
+              gl.drawElements(gl.TRIANGLES, current_cube.indeces.length, gl.UNSIGNED_SHORT, 0);
             });
         });
     });
+
+    renderCube(gl, 10, cubebuffer, view, projection)
+}
+
+function setupCube(gl){
+  gl.useProgram(gl.programcube);
+  gl.programcube.a_Position = gl.getAttribLocation(gl.programcube, "a_Position");
+  var buffer = createEmptyArrayBuffer(gl, gl.programcube.a_Position, 3, gl.FLOAT);
+
+  initCube(gl, buffer);
+
+  initCubeTexture(gl);
+
+  var uProjection = gl.getUniformLocation(gl.programcube, "u_projection");
+  gl.uniformMatrix4fv(uProjection, false, flatten(mat4()));
+
+  var uLightPosition = gl.getUniformLocation(gl.programcube, "u_lightPosition");
+  gl.uniform4fv(uLightPosition, flatten(vec4(0, 0, -1, 0)));
+
+  var uLightEmission = gl.getUniformLocation(gl.programcube, "u_lightEmission");
+  gl.uniform3fv(uLightEmission, flatten(vec3(1, 1, 1)));
+
+  return buffer
+}
+
+function initCube(gl, buffer){
+  cubePoints.push(vec3(-1, -1, 0.999), vec3(1, -1, 0.999), vec3(-1, 1, 0.999), vec3(-1, 1, 0.999), vec3(1, -1, 0.999), vec3(1, 1, 0.999))
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+  gl.bufferData(gl.ARRAY_BUFFER, flatten(cubePoints), gl.STATIC_DRAW);
+}
+
+function renderCube(gl, numPoints, buffer, sphereView, sphereProjection){
+  gl.useProgram(gl.programcube);
+  if(g_tex_ready_cube == 6){
+      var uView = gl.getUniformLocation(gl.programcube, "u_view");
+      gl.uniformMatrix4fv(uView, false, flatten(mat4()));
+
+      var uModel = gl.getUniformLocation(gl.programcube, "u_model");
+      gl.uniformMatrix4fv(uModel, false, flatten(mat4()));
+
+      var invView = sphereView;
+
+      invView[3] = vec4(0, 0, 0, 1);
+
+      var viewDir = mult(sphereProjection, invView);
+
+      var uViewDirection = gl.getUniformLocation(gl.programcube, "u_viewDirectionProjectionInverse");
+      gl.uniformMatrix4fv(uViewDirection, false, flatten(inverse(viewDir)));
+
+      var uReflective = gl.getUniformLocation(gl.programcube, "u_reflective");
+      gl.uniform1f(uReflective, 0.0);
+
+      var uEyePosition = gl.getUniformLocation(gl.programcube, "u_eyePosition");
+      gl.uniform3fv(uEyePosition, flatten(vec3(0, 0, 0)));
+
+      // Get position attribute location
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+      gl.vertexAttribPointer(gl.programcube.a_Position, 3, gl.FLOAT, false, 0, 0);
+      gl.enableVertexAttribArray(gl.programcube.a_Position);
+
+      gl.drawArrays(gl.TRIANGLES, 0, numPoints);
+  }
+}
+
+var g_tex_ready_cube = 0;
+function initCubeTexture(gl)
+{
+    var cubemap = ['textures/cm_left.png', // POSITIVE_X
+        'textures/cm_right.png', // NEGATIVE_X
+        'textures/cm_top.png', // POSITIVE_Y
+        'textures/cm_bottom.png', // NEGATIVE_Y
+        'textures/cm_back.png', // POSITIVE_Z
+        'textures/cm_front.png' // NEGATIVE_Z
+    ]; 
+
+    gl.activeTexture(gl.TEXTURE0);
+    var texture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_CUBE_MAP, texture);
+    gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    for(var i = 0; i < 6; ++i) {
+        var image = document.createElement('img');
+        image.crossorigin = 'anonymous';
+        image.textarget = gl.TEXTURE_CUBE_MAP_POSITIVE_X + i;
+        image.onload = function(event)
+        {
+            var image = event.target;
+            gl.activeTexture(gl.TEXTURE0);
+            gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+            gl.texImage2D(image.textarget, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
+            ++g_tex_ready_cube;
+        };
+        image.src = cubemap[i];
+    }
+    gl.uniform1i(gl.getUniformLocation(gl.programcube, "texMap"), 0);
 }
 
 /**
@@ -300,4 +462,14 @@ function project_to_sphere(x, y) {
     else       // On hyperbola
       z = t * t / d;
     return z;
+}
+
+/**
+ * Function for creating a timer
+ */
+function setup_timer(){
+  var downloadTimer = setInterval(function(){
+    document.querySelector("#time").textContent = current_time_spent + " seconds";
+    current_time_spent += 1;
+  }, 1000);
 }

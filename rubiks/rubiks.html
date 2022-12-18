@@ -1,8 +1,16 @@
 <!DOCTYPE html>
 <html>
+    <head>
+        <link rel="stylesheet" href="rubiks.css">
+    </head>
     <body>
     <!--<h1>Computer graphics lektion 11</h1> -->
-    <canvas id="c" height="0" width="0"></canvas>
+    <div class="container">
+        <canvas id="c" height="0" width="0"></canvas>
+        <div id="overlay">
+            <div>Time spent: <span id="time"></span></div>
+        </div>
+    </div>
     <script type="text/javascript" src="rubiks.js"></script>
     <script type="text/javascript" src="rubikscube.js"></script>
     <script type="text/javascript" src="../common/quaternion.js"></script>
@@ -27,11 +35,98 @@
             gl_FragColor = v_Color;
         }
     </script>
+    <script id="vertex-shader-cube" type="x-shader/x-vertex">
+        uniform mat4 u_model;
+        uniform mat4 u_view;
+        uniform mat4 u_projection;
+        uniform vec4 u_lightPosition;
+        uniform vec3 u_lightEmission;
+        attribute vec3 a_Position;
+        varying vec4 vColor;
+        varying vec3 vPosition;
+        void main(){
+            vec4 normal = normalize(vec4(a_Position, 1.0));
+            vec3 pos = (u_view * normal).xyz;
+            vec3 light = (u_view * u_lightPosition).xyz;
+            vec3 w_i = u_lightPosition.w == 0.0 ? normalize(light) : normalize(light - pos);
+
+            float theta = dot(normal, vec4(w_i, 1.0));
+            vec3 objectColor = vec3(0.5, 0.5, 0.5);
+            
+            vColor = vec4(objectColor * u_lightEmission, 1.0) * max(theta, 0.0) + vec4(u_lightEmission * vec3(0.5, 0.5, 0.5), 1.0);
+            vPosition = a_Position - vec3(0, 0, 0);
+
+            gl_Position = u_projection * u_view * u_model * vec4(a_Position, 1.0);
+        }
+    </script>
+    <script id="fragment-shader-cube" type="x-shader/x-fragment">
+        precision mediump float;
+        uniform samplerCube u_texture;
+        uniform mat4 u_viewDirectionProjectionInverse;
+        uniform float u_reflective;
+        uniform vec3 u_eyePosition;
+        varying vec4 vColor;
+        varying vec3 vPosition;
+        void main() {
+            vec4 normal = u_viewDirectionProjectionInverse * vec4(vPosition, 1.0);
+            if (u_reflective > 0.5){
+                vec3 incident = vPosition - u_eyePosition;
+                gl_FragColor = vColor * textureCube(u_texture, reflect(incident, normalize(normal.xyz / normal.w)));
+            } else {
+                gl_FragColor = vColor * textureCube(u_texture, normalize(normal.xyz / normal.w));
+            }
+        }
+    </script>
     <script type="text/javascript" src="../common/MV.js"></script>
+    <div style="text-align: center;">
+        <button id="reset_view">Reset view</button>
+    </div>
     <br>
-    <button id="rot_x">Rotate x axis</button>
-    <button id="rot_y">Rotate y axis</button>
-    <button id="rot_z">Rotate z axis</button>
+    <div style="text-align: center">
+        <button id="rot_l">Rotate</button>
+        <label for="rot_l">Left</label>
+        <button id="rot_rev_l">Rotate in reverse</button>
+    </div>
+    <div style="text-align: center">
+        <button id="rot_m">Rotate</button>
+        <label for="rot_m">M</label>
+        <button id="rot_rev_m">Rotate in reverse</button>
+    </div>
+    <div style="text-align: center">
+        <button id="rot_r">Rotate</button>
+        <label for="rot_r">Right</label>
+        <button id="rot_rev_r">Rotate in reverse</button>
+    </div>
+    <div style="text-align: center">
+        <button id="rot_b">Rotate</button>
+        <label for="rot_b">Bottom</label>
+        <button id="rot_rev_b">Rotate in reverse</button>
+    </div>
+    <div style="text-align: center">
+        <button id="rot_e">Rotate</button>
+        <label for="rot_e">E</label>
+        <button id="rot_rev_e">Rotate in reverse</button>
+    </div>
+    <div style="text-align: center">
+        <button id="rot_t">Rotate</button>
+        <label for="rot_t">Top</label>
+        <button id="rot_rev_t">Rotate in reverse</button>
+    </div>
+    <div style="text-align: center">
+        <button id="rot_f">Rotate</button>
+        <label for="rot_f">Front</label>
+        <button id="rot_rev_f">Rotate in reverse</button>
+    </div>
+    <div style="text-align: center">
+        <button id="rot_s">Rotate</button>
+        <label for="rot_s">S</label>
+        <button id="rot_rev_s">Rotate in reverse</button>
+    </div>
+    <div style="text-align: center">
+        <button id="rot_k">Rotate K axis</button>
+        <label for="rot_k">Back</label>
+        <button id="rot_rev_k">Rotate reverse K axis</button>
+    </div>
     <!--
         <br>
         <button id="inc_btn">Increase size</button>
