@@ -7,13 +7,13 @@ var num_of_sides = 3;
 var current_time_spent = 0;
 var cubePoints = []
 
-const BLACK = [0.0, 0.0, 0.0, 1.0];
-const YELLOW = [1.0, 1.0, 0.0, 1.0];
-const WHITE = [1.0, 1.0, 1.0, 1.0];
-const ORANGE = [1.0, 0.5, 0.0, 1.0];
-const RED = [1.0, 0.0, 0.0, 1.0];
-const BLUE = [0.0, 0.0, 1.0, 1.0];
-const GREEN = [0.0, 1.0, 0.0, 1.0];
+const BLACK = [0 / 255, 0 / 255, 0 / 255, 1.0];
+const YELLOW = [255 / 255, 213 / 255, 0 / 255, 1.0];
+const WHITE = [255 / 255, 255 / 255, 255 / 255, 1.0];
+const ORANGE = [255 / 255, 89 / 255, 0 / 255, 1.0];
+const RED = [185 / 255, 0 / 255, 0 / 255, 1.0];
+const BLUE = [0 / 255, 69 / 255, 173 / 255, 1.0];
+const GREEN = [0 / 255, 155 / 255, 72 / 255, 1.0];
 const COLORS = [
   // Back
   YELLOW, YELLOW, YELLOW, YELLOW,
@@ -70,92 +70,92 @@ window.onload = function init(){
 
     var rot_l_btn = document.getElementById("rot_l");
     rot_l_btn.addEventListener("click", () => {
-        cube.turnFace(MOVES.L)
+        cube.rotateMove(MOVES.LEFT)
     })
 
     var rot_l_rev_btn = document.getElementById("rot_rev_l");
     rot_l_rev_btn.addEventListener("click", () => {
-        cube.turnFace(MOVES.REV_L)
+        cube.rotateMove(MOVES.REV_LEFT)
     })
 
     var rot_m_btn = document.getElementById("rot_m");
     rot_m_btn.addEventListener("click", () => {
-        cube.turnFace(MOVES.M)
+        cube.rotateMove(MOVES.MIDDLE_Y)
     })
 
     var rot_m_rev_btn = document.getElementById("rot_rev_m");
     rot_m_rev_btn.addEventListener("click", () => {
-        cube.turnFace(MOVES.REV_M)
+        cube.rotateMove(MOVES.REV_MIDDLE_Y)
     })
 
     var rot_r_btn = document.getElementById("rot_r");
     rot_r_btn.addEventListener("click", () => {
-        cube.turnFace(MOVES.R)
+        cube.rotateMove(MOVES.RIGHT)
     })
 
     var rot_r_rev_btn = document.getElementById("rot_rev_r");
     rot_r_rev_btn.addEventListener("click", () => {
-        cube.turnFace(MOVES.REV_R)
+        cube.rotateMove(MOVES.REV_RIGHT)
     })
 
     var rot_b_btn = document.getElementById("rot_b");
     rot_b_btn.addEventListener("click", () => {
-        cube.turnFace(MOVES.B)
+        cube.rotateMove(MOVES.BOTTOM)
     })
 
     var rot_b_rev_btn = document.getElementById("rot_rev_b");
     rot_b_rev_btn.addEventListener("click", () => {
-        cube.turnFace(MOVES.REV_B)
+        cube.rotateMove(MOVES.REV_BOTTOM)
     })
 
     var rot_e_btn = document.getElementById("rot_e");
     rot_e_btn.addEventListener("click", () => {
-        cube.turnFace(MOVES.E)
+        cube.rotateMove(MOVES.MIDDLE_X)
     })
 
     var rot_e_rev_btn = document.getElementById("rot_rev_e");
     rot_e_rev_btn.addEventListener("click", () => {
-        cube.turnFace(MOVES.REV_E)
+        cube.rotateMove(MOVES.REV_MIDDLE_X)
     })
 
     var rot_t_btn = document.getElementById("rot_t");
     rot_t_btn.addEventListener("click", () => {
-        cube.turnFace(MOVES.T)
+        cube.rotateMove(MOVES.TOP)
     })
 
     var rot_t_rev_btn = document.getElementById("rot_rev_t");
     rot_t_rev_btn.addEventListener("click", () => {
-        cube.turnFace(MOVES.REV_T)
+        cube.rotateMove(MOVES.REV_TOP)
     })
 
     var rot_f_btn = document.getElementById("rot_f");
     rot_f_btn.addEventListener("click", () => {
-        cube.turnFace(MOVES.F)
+        cube.rotateMove(MOVES.FRONT)
     })
 
     var rot_f_rev_btn = document.getElementById("rot_rev_f");
     rot_f_rev_btn.addEventListener("click", () => {
-        cube.turnFace(MOVES.REV_F)
+        cube.rotateMove(MOVES.REV_FRONT)
     })
 
     var rot_s_btn = document.getElementById("rot_s");
     rot_s_btn.addEventListener("click", () => {
-        cube.turnFace(MOVES.S)
+        cube.rotateMove(MOVES.MIDDLE_Z)
     })
 
     var rot_s_rev_btn = document.getElementById("rot_rev_s");
     rot_s_rev_btn.addEventListener("click", () => {
-        cube.turnFace(MOVES.REV_S)
+        cube.rotateMove(MOVES.REV_MIDDLE_Z)
     })
 
     var rot_k_btn = document.getElementById("rot_k");
     rot_k_btn.addEventListener("click", () => {
-        cube.turnFace(MOVES.K)
+        cube.rotateMove(MOVES.BACK)
     })
 
     var rot_k_rev_btn = document.getElementById("rot_rev_k");
     rot_k_rev_btn.addEventListener("click", () => {
-        cube.turnFace(MOVES.REV_K)
+        cube.rotateMove(MOVES.REV_BACK)
     })
 
     var q_rot = new Quaternion();
@@ -438,9 +438,17 @@ function initEventHandlers(canvas, qrot, qinc) {
           var s_last_y = (0.5 - (lastY - rect.top) / rect.height) * 2;
           switch (current_action) {
             case 1: { // orbit
-              var v1 = new vec3([s_x, s_y, project_to_sphere(s_x, s_y)]);
-              var v2 = new vec3([s_last_x, s_last_y, project_to_sphere(s_last_x, s_last_y)]);
-              qinc = qinc.make_rot_vec2vec(normalize(v1), normalize(v2));
+              if(ev.ctrlKey){
+                if(lastY > y){
+                  spacing = Math.min(spacing + 0.2, 5.0);
+                } else {
+                  spacing = Math.max(spacing - 0.2, 0.1);
+                }
+              } else {
+                var v1 = new vec3([s_x, s_y, project_to_sphere(s_x, s_y)]);
+                var v2 = new vec3([s_last_x, s_last_y, project_to_sphere(s_last_x, s_last_y)]);
+                qinc = qinc.make_rot_vec2vec(normalize(v1), normalize(v2));
+              }
             }
               break;
           }

@@ -1,8 +1,8 @@
 var Cube = function() {
     this.vertices = [];
-    this.colors = [];
     this.indeces = [];
     this.position = [0, 0, 0]
+    this.originalAxis = [vec3(-1,0,0),vec3(0,-1,0),vec3(0,0,-1)];
     this.axis = [vec3(-1,0,0),vec3(0,-1,0),vec3(0,0,-1)];
     this.internalMatrix = null;
 }
@@ -35,17 +35,15 @@ Cube.prototype.init = function(i, j, k){
     )
 
     this.position = [i-1, j-1, k-1]
+    this.originalPosition = [i-1, j-1, k-1]
 }
 
 Cube.prototype.setNormal = function(normals){
     this.normals = normals
 }
 
-Cube.prototype.rotate = function(x, y, z){
-    let rot_x = rotateX(x);
-    let rot_y = rotateY(y);
-    let rot_z = rotateZ(z);
-    let rotation = mult(rot_x, mult(rot_y, rot_z))
+Cube.prototype.rotate = function(angle, v){
+    let rotation = rotate(angle, v)
 
     this.internalMatrix = mult(this.internalMatrix, rotation);
 }
@@ -61,91 +59,91 @@ const AXIS = {
 }
 
 const MOVES = {
-    L: "L", 
-    REV_L: "l", 
-    M: "M", 
-    REV_M: "m", 
-    R: "R", 
-    REV_R: "r", 
-    B: "B", 
-    REV_B: "b", 
-    E: "E",
-    REV_E: "e", 
-    T: "T", 
-    REV_T: "t", 
-    F: "F", 
-    REV_F: "f",
-    S: "S", 
-    REV_S: "s", 
-    K: "K", 
-    REV_K: "k"
+    LEFT: "left", 
+    REV_LEFT: "rev_left", 
+    MIDDLE_Y: "middle_y", 
+    REV_MIDDLE_Y: "rev_middle_y", 
+    RIGHT: "right", 
+    REV_RIGHT: "rev_right", 
+    BOTTOM: "bottom", 
+    REV_BOTTOM: "rev_bottom", 
+    MIDDLE_X: "middle_x",
+    REV_MIDDLE_X: "rev_middle_x", 
+    TOP: "top", 
+    REV_TOP: "rev_top", 
+    FRONT: "front", 
+    REV_FRONT: "rev_front",
+    MIDDLE_Z: "middle_z", 
+    REV_MIDDLE_Z: "rev_middle_z", 
+    BACK: "back", 
+    REV_BACK: "rev_back"
 }
 
-RubiksCube.prototype.swap = function(x, y, z, swap1, swap2){
+RubiksCube.prototype.swap = function(x, y, z, pos1, pos2){
     let current_cube = this.cubes[x][y][z]
-    var tmp = current_cube.position[swap1];
-    current_cube.position[swap1] = current_cube.position[swap2];
-    current_cube.position[swap2] = -tmp;
-    tmp = current_cube.axis[swap2];
-    current_cube.axis[swap2] = negate(current_cube.axis[swap1]);
-    current_cube.axis[swap1] = tmp;
+    var tmp = current_cube.position[pos1];
+    current_cube.position[pos1] = current_cube.position[pos2];
+    current_cube.position[pos2] = -tmp;
+    tmp = current_cube.axis[pos2];
+    current_cube.axis[pos2] = negate(current_cube.axis[pos1]);
+    current_cube.axis[pos1] = tmp;
 }
 
-RubiksCube.prototype.updatePosition = function(face){
+RubiksCube.prototype.updateCubes = function(move){
     var i, j, k, val;
-    switch (face){
-      case "L":
+    switch (move){
+      case MOVES.LEFT:
         i = AXIS.X; j = AXIS.Z; k = AXIS.Y; val = -1;
         break;
-      case "l":
+      case MOVES.REV_LEFT:
         i = AXIS.X; j = AXIS.Y; k = AXIS.Z; val = -1;
         break;
-      case "R":
+      case MOVES.RIGHT:
         i = AXIS.X; j = AXIS.Y; k = AXIS.Z; val = 1;
         break;
-      case "r":
+      case MOVES.REV_RIGHT:
         i = AXIS.X; j = AXIS.Z; k = AXIS.Y; val = 1;
       break;
-      case "T":
+      case MOVES.TOP:
         i = AXIS.Y; j = AXIS.Z; k = AXIS.X; val = 1;
       break;
-      case "t":
+      case MOVES.REV_TOP:
         i = AXIS.Y; j = AXIS.X; k = AXIS.Z; val = 1;
       break;
-      case "B":
+      case MOVES.BOTTOM:
         i = AXIS.Y; j = AXIS.X; k = AXIS.Z; val = -1;
       break;
-      case "b":
+      case MOVES.REV_BOTTOM:
         i = AXIS.Y; j = AXIS.Z; k = AXIS.X; val = -1;
       break;
-      case "E":
+      case MOVES.MIDDLE_X:
         i = AXIS.Y; j = AXIS.X; k = AXIS.Z; val = 0;
       break;
-      case "e":
+      case MOVES.REV_MIDDLE_X:
         i = AXIS.Y; j = AXIS.Z; k = AXIS.X; val = 0;
       break;
-      case "F":
+      case MOVES.FRONT:
         i = AXIS.Z; j = AXIS.X; k = AXIS.Y; val = 1;
       break;
-      case "f":
+      case MOVES.REV_FRONT:
         i = AXIS.Z; j = AXIS.Y; k = AXIS.X; val = 1;
       break;
-      case "S":
+      case MOVES.MIDDLE_Z:
         i = AXIS.Z; j = AXIS.X; k = AXIS.Y; val = 0;
       break;
-      case "s":
+      case MOVES.REV_MIDDLE_Z:
         i = AXIS.Z; j = AXIS.Y; k = AXIS.X; val = 0;
       break;
-      case "K":
+      case MOVES.BACK:
         i = AXIS.Z; j = AXIS.Y; k = AXIS.X; val = -1;
       break;
-      case "k":
+      case MOVES.REV_BACK:
         i = AXIS.Z; j = AXIS.X; k = AXIS.Y; val = -1;
       break;
-      case "M":
+      case MOVES.MIDDLE_Y:
         i = AXIS.X; j = AXIS.Z; k = AXIS.Y; val = 0;
       break;
-      case "m":
+      case MOVES.REV_MIDDLE_Y:
         i = AXIS.X; j = AXIS.Y; k = AXIS.Z; val = 0;
       break;
     }
@@ -161,89 +159,102 @@ RubiksCube.prototype.updatePosition = function(face){
     })
 }
 
-RubiksCube.prototype.turnFace = function(face){
+RubiksCube.prototype.rotateMove = function(move){
     var is_clockwise, index, axis;
-    switch (face) {
-      case "L":
-        axis = AXIS.X; index = -1; is_clockwise = 1;
+    switch (move) {
+      case MOVES.LEFT:
+        axis = AXIS.X; index = -1; is_clockwise = true;
       break;
-      case "l":
-        axis = AXIS.X; index = -1; is_clockwise = 0;
+      case MOVES.REV_LEFT:
+        axis = AXIS.X; index = -1; is_clockwise = false;
       break;
-      case "M":
-        axis = AXIS.X;index = 0;is_clockwise = 1;
+      case MOVES.MIDDLE_Y:
+        axis = AXIS.X;index = 0;is_clockwise = true;
       break;
-      case "m":
-        axis = AXIS.X;index = 0;is_clockwise = 0;
+      case MOVES.REV_MIDDLE_Y:
+        axis = AXIS.X;index = 0;is_clockwise = false;
       break;
-      case "R":
-        axis = AXIS.X; index = 1; is_clockwise = 0;
+      case MOVES.RIGHT:
+        axis = AXIS.X; index = 1; is_clockwise = false;
       break;
-      case "r":
-        axis = AXIS.X; index = 1; is_clockwise = 1;
+      case MOVES.REV_RIGHT:
+        axis = AXIS.X; index = 1; is_clockwise = true;
       break;
-      case "T":
-        axis = AXIS.Y;index = 1;is_clockwise = 0;
+      case MOVES.TOP:
+        axis = AXIS.Y;index = 1;is_clockwise = false;
       break;
-      case "t":
-        axis = AXIS.Y;index = 1;is_clockwise = 1;
+      case MOVES.REV_TOP:
+        axis = AXIS.Y;index = 1;is_clockwise = true;
       break;
-      case "B":
-        axis = AXIS.Y;index = -1;is_clockwise = 1;
+      case MOVES.BOTTOM:
+        axis = AXIS.Y;index = -1;is_clockwise = true;
       break;
-      case "b":
-        axis = AXIS.Y;index = -1;is_clockwise = 0;
+      case MOVES.REV_BOTTOM:
+        axis = AXIS.Y;index = -1;is_clockwise = false;
       break;
-      case "E":
-        axis = AXIS.Y;index = 0;is_clockwise = 1;
+      case MOVES.MIDDLE_X:
+        axis = AXIS.Y;index = 0;is_clockwise = true;
       break;
-      case "e":
-        axis = AXIS.Y;index = 0;is_clockwise = 0;
+      case MOVES.REV_MIDDLE_X:
+        axis = AXIS.Y;index = 0;is_clockwise = false;
       break;
-      case "F":
-        axis = AXIS.Z;index = 1;is_clockwise = 0;
+      case MOVES.FRONT:
+        axis = AXIS.Z;index = 1;is_clockwise = false;
       break;
-      case "f":
-        axis = AXIS.Z;index = 1;is_clockwise = 1;
+      case MOVES.REV_FRONT:
+        axis = AXIS.Z;index = 1;is_clockwise = true;
       break;
-      case "K":
-        axis = AXIS.Z;index = -1;is_clockwise = 1;
+      case MOVES.BACK:
+        axis = AXIS.Z;index = -1;is_clockwise = true;
       break;
-      case "k":
-        axis = AXIS.Z;index = -1;is_clockwise = 0;
+      case MOVES.REV_BACK:
+        axis = AXIS.Z;index = -1;is_clockwise = false;
       break;
-      case "S":
-        axis = AXIS.Z;index = 0;is_clockwise = 0;
+      case MOVES.MIDDLE_Z:
+        axis = AXIS.Z;index = 0;is_clockwise = false;
       break;
-      case "s":
-        axis = AXIS.Z;index = 0;is_clockwise = 1;
+      case MOVES.REV_MIDDLE_Z:
+        axis = AXIS.Z;index = 0;is_clockwise = true;
       break;
     }
 
-    this.cubes.forEach( function(c1, x){
-        c1.forEach(function(c2, y){
-            c2.forEach(function(c3, z){
-                let current_cube = c3;
-                if(current_cube.position[axis] == index){
-                    if(!is_clockwise){
-                        current_cube.internalMatrix = mult(current_cube.internalMatrix, rotate(90, current_cube.axis[axis]))
-                    } else {
-                        current_cube.internalMatrix = mult(current_cube.internalMatrix, rotate(90, negate(current_cube.axis[axis])))
+    var angle = 10;
+    var rotationTimer = setInterval(() =>{
+        this.cubes.forEach( function(c1, x){
+            c1.forEach(function(c2, y){
+                c2.forEach(function(c3, z){
+                    let current_cube = c3;
+                    if(current_cube.position[axis] == index){
+                        if(!is_clockwise){
+                            current_cube.rotate(10, current_cube.axis[axis])
+                        } else {
+                            current_cube.rotate(10, negate(current_cube.axis[axis]))
+                        }
                     }
-                }
+                })
             })
         })
-    })
-    this.updatePosition(face)
+        if(angle == 90){
+            clearInterval(rotationTimer);
+        } 
+        angle += 10;
+        this.updateCubes(move)
+    }, 10);
 }
 
-const random_amount = 1000;
+const random_amount = 50;
 RubiksCube.prototype.randomize = function(){
-    for(let i = 0; i < random_amount; i++){
-        var rand = Math.floor(Math.random() * Object.keys(MOVES).length);
-        var rand_move = MOVES[Object.keys(MOVES)[rand]];
-        this.turnFace(rand_move)
-    }
+    let i = 0;
+    var randomTimer = setInterval(() =>{
+        if(i == random_amount){
+            clearInterval(randomTimer)
+        } else {
+            var rand = Math.floor(Math.random() * Object.keys(MOVES).length);
+            var rand_move = MOVES[Object.keys(MOVES)[rand]];
+            this.rotateMove(rand_move)
+            i++;
+        }
+    }, 200);
 }
 
 RubiksCube.prototype.create = function(sideNum){
