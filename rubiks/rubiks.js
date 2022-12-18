@@ -31,7 +31,7 @@ const COLORS = [
   BLACK,
 ];
 
-var vertexColors = [];
+var colors = [];
 
 /**
  * WebGL init function
@@ -203,11 +203,11 @@ function render(gl, cube, q_rot, cubebuffer){
               const current_cube = cube.cubes[i][j][k]
 
               // Create the colors to be displayed
-              colorDisplay(i, j, k);
+              createColors(i, j, k);
 
               var cBuffer = gl.createBuffer();
               gl.bindBuffer(gl.ARRAY_BUFFER, cBuffer);
-              gl.bufferData(gl.ARRAY_BUFFER, flatten(vertexColors), gl.STATIC_DRAW);
+              gl.bufferData(gl.ARRAY_BUFFER, flatten(colors), gl.STATIC_DRAW);
               gl.vertexAttribPointer(gl.program.a_Color, 4, gl.FLOAT, false, 0 , 0);
               gl.enableVertexAttribArray(gl.program.a_Color);
 
@@ -238,7 +238,7 @@ function render(gl, cube, q_rot, cubebuffer){
         });
     });
 
-    renderCube(gl, 10, cubebuffer, view, projection)
+    renderCube(gl, cubePoints.length, cubebuffer, view, projection)
 }
 
 function setupCube(gl){
@@ -338,34 +338,33 @@ function initCubeTexture(gl)
 /**
  * Function for getting the color of the cube
  */
-function colorDisplay(x, y, z){
+function createColors(x, y, z){
     var i;
-    for (i = 0; i < vertexColors.length; i++){
-      vertexColors[i] = COLORS[i];
+    for (i = 0; i < colors.length; i++){
+      colors[i] = COLORS[i];
     }
     if (x != 0){
-      makeBlack(8);
+      dark(8);
     }
     if (x != num_of_sides - 1){
-      makeBlack(12);
+      dark(12);
     }
     if (y != 0){
-      makeBlack(16);
+      dark(16);
     }
     if (y != num_of_sides - 1){
-      makeBlack(20);
+      dark(20);
     }
     if (z != 0){
-      makeBlack(0);
+      dark(0);
     }
     if (z != num_of_sides - 1){
-      makeBlack(4);
+      dark(4);
     }
     // Any non-surface faces
-    function makeBlack(start){
-      var i;
-      for (i = start; i < start+ 4; i++){
-        vertexColors[i] = COLORS[24];
+    function dark(initial){
+      for (let i = initial; i < initial+ 4; i++){
+        colors[i] = COLORS[24];
       }
     }
   }
